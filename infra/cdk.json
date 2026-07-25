@@ -2,9 +2,9 @@
   "app": "python3 app.py",
   "context": {
     "shared_vpc_name": "blahblahbudget-vpc",
-    "shared_lambda_sg_id": "FILL_ME: aws ec2 describe-security-groups --filters Name=description,Values='FastAPI Lambda - outbound to Aurora' --query 'SecurityGroups[0].GroupId' --output text",
-    "shared_db_host": "FILL_ME: aws rds describe-db-clusters --db-cluster-identifier blahblahbudget-db --query 'DBClusters[0].Endpoint' --output text",
-    "shared_admin_secret_arn": "FILL_ME: aws secretsmanager describe-secret --secret-id blahblahbudget/db-credentials --query ARN --output text",
+    "shared_lambda_sg_id": "sg-03ea62f4166cb8135",
+    "shared_db_host": "blahblahbudget-db.cluster-c5iu02gy8a6b.us-west-2.rds.amazonaws.com",
+    "shared_admin_secret_arn": "arn:aws:secretsmanager:us-west-2:452379802132:secret:blahblahbudget/db-credentials-Hj5XuL",
     "@aws-cdk/aws-lambda:recognizeLayerVersion": true,
     "@aws-cdk/core:checkSecretUsage": true,
     "@aws-cdk/aws-iam:minimizePolicies": true,

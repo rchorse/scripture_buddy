@@ -1,0 +1,28 @@
+name: scripturebuddy
+description: Gamified scripture reading — learn the scriptures with streaks, XP, and friends.
+publish_to: "none"
+version: 0.1.0+1
+
+environment:
+  sdk: ">=3.4.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  # Auth: Cognito SRP via the official AWS Amplify Dart libraries.
+  amplify_flutter: ^2.0.0
+  amplify_auth_cognito: ^2.0.0
+  http: ^1.2.0
+  go_router: ^14.0.0
+  flutter_riverpod: ^2.5.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/art/
+    - assets/audio/
