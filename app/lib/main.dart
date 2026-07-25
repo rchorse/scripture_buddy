@@ -15,7 +15,7 @@ Future<void> main() async {
 Future<void> _configureAmplify() async {
   if (Amplify.isConfigured) return;
   await Amplify.addPlugin(AmplifyAuthCognito());
-  final config = '''
+  const config = '''
 {
   "auth": {
     "user_pool_id": "${AppConfig.userPoolId}",
