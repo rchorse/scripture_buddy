@@ -1,0 +1,10 @@
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint.flake8-bugbear]
+# Depends() in argument defaults is the canonical FastAPI dependency idiom.
+extend-immutable-calls = ["fastapi.Depends", "fastapi.security.HTTPBearer"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

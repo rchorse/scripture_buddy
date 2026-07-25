@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  api:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: scripturebuddy
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready --health-interval 5s
+          --health-timeout 5s --health-retries 10
+    defaults:
+      run:
+        working-directory: api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+      - run: pip install -r requirements.txt -r requirements-dev.txt
+      - run: ruff check .
+      - run: pytest
+        env:
+          DATABASE_URL: postgresql+psycopg2://postgres:postgres@localhost:5432/scripturebuddy
+
+  flutter:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test
+
+  infra:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: infra
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - run: npm install -g aws-cdk
+      - run: pip install -r requirements.txt
+      # Synth with placeholder context so no AWS lookups are needed.
+      - run: >
+          cdk synth --no-lookups
+          -c shared_vpc_name=blahblahbudget-vpc
+          -c shared_lambda_sg_id=sg-00000000000000000
+          -c shared_db_host=placeholder.cluster.local
+          -c shared_admin_secret_arn=arn:aws:secretsmanager:us-west-2:111111111111:secret:placeholder-abcdef
+        env:
+          CDK_DEFAULT_ACCOUNT: "111111111111"

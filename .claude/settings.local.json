@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(flutter --version)",
+      "Bash(gh --version)",
+      "Bash(gh auth *)",
+      "Bash(PYTHONPATH=\".venv-deps:.\" python3 -m ruff check . --exclude .venv-deps)",
+      "Bash(PYTHONPATH=\".venv-deps:.\" python3 -m pytest -q)",
+      "Bash(python3 -m py_compile infra/app.py infra/infra/*.py api/main.py api/app/core/*.py api/app/routers/me.py api/app/jobs/bootstrap.py api/alembic/versions/*.py)"
+    ]
+  }
+}

@@ -1,0 +1,66 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: us-west-2
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - run: npm install -g aws-cdk
+
+      - name: CDK deploy
+        working-directory: infra
+        run: |
+          pip install -r requirements.txt
+          cdk deploy ScriptureBuddyAuth ScriptureBuddyApi ScriptureBuddyJobs ScriptureBuddyWeb \
+            --require-approval never
+
+      - name: Run migrations
+        run: |
+          aws lambda invoke --function-name scripturebuddy-api \
+            --cli-binary-format raw-in-base64-out \
+            --payload '{"task":"migrate"}' migrate-out.json
+          cat migrate-out.json
+          grep -q '"status": "ok"' migrate-out.json
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Build and publish web
+        working-directory: app
+        run: |
+          flutter build web --release --dart-define=API_URL=${{ vars.API_URL }}
+          BUCKET=$(aws cloudformation describe-stacks --stack-name ScriptureBuddyWeb \
+            --query "Stacks[0].Outputs[?OutputKey=='BucketName'].OutputValue" --output text)
+          DIST_ID=$(aws cloudformation describe-stacks --stack-name ScriptureBuddyWeb \
+            --query "Stacks[0].Outputs[?OutputKey=='DistributionId'].OutputValue" --output text)
+          aws s3 sync build/web "s3://$BUCKET" --delete
+          aws cloudfront create-invalidation --distribution-id "$DIST_ID" --paths "/*"
