@@ -1,10 +1,10 @@
 from sqlalchemy import create_engine
 
-from alembic import context
-from app.core.db import build_engine_config
-
 # Model metadata for autogenerate. Import every models module here as they are
 # added so autogenerate sees the full picture.
+import app.models.content  # noqa: F401
+from alembic import context
+from app.core.db import build_engine_config
 from app.models import metadata
 
 target_metadata = metadata
