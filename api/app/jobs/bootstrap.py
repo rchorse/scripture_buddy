@@ -42,39 +42,47 @@ def bootstrap_database() -> dict:
     )
     conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
     created = {"database": False, "role": False}
+    # A fresh password every run makes the task self-healing: a partial earlier
+    # run can never strand the role with a password the secret doesn't hold.
+    password = pysecrets.token_urlsafe(32)
     try:
         with conn.cursor() as cur:
             cur.execute("SELECT 1 FROM pg_roles WHERE rolname = 'sb_app'")
-            role_exists = cur.fetchone() is not None
-            password = None
-            if not role_exists:
-                password = pysecrets.token_urlsafe(32)
+            if cur.fetchone() is None:
                 cur.execute(
                     sql.SQL("CREATE ROLE sb_app LOGIN PASSWORD {}").format(
                         sql.Literal(password)
                     )
                 )
                 created["role"] = True
+            else:
+                cur.execute(
+                    sql.SQL("ALTER ROLE sb_app PASSWORD {}").format(sql.Literal(password))
+                )
 
             cur.execute("SELECT 1 FROM pg_database WHERE datname = 'scripturebuddy'")
             if cur.fetchone() is None:
+                # RDS master user is not a superuser: it must be a member of a
+                # role to create a database owned by it.
+                cur.execute(
+                    sql.SQL("GRANT sb_app TO {}").format(sql.Identifier(admin["username"]))
+                )
                 cur.execute("CREATE DATABASE scripturebuddy OWNER sb_app")
                 created["database"] = True
     finally:
         conn.close()
 
-    if created["role"]:
-        sm.put_secret_value(
-            SecretId=app_secret_arn,
-            SecretString=json.dumps(
-                {
-                    "username": "sb_app",
-                    "password": password,
-                    "host": host,
-                    "port": 5432,
-                    "dbname": "scripturebuddy",
-                }
-            ),
-        )
+    sm.put_secret_value(
+        SecretId=app_secret_arn,
+        SecretString=json.dumps(
+            {
+                "username": "sb_app",
+                "password": password,
+                "host": host,
+                "port": 5432,
+                "dbname": "scripturebuddy",
+            }
+        ),
+    )
 
     return {"status": "ok", "created": created}
