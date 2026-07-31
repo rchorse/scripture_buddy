@@ -27,7 +27,12 @@
       "Bash(curl -sL -o book-of-mormon.json https://raw.githubusercontent.com/bcbooks/scriptures-json/master/book-of-mormon.json)",
       "Bash(python3 -c ' *)",
       "Bash(PYTHONPATH=\".venv-deps:.\" python3 -m ruff check . --exclude .venv-deps --fix)",
-      "Bash(aws cloudformation *)"
+      "Bash(aws cloudformation *)",
+      "Bash(aws cognito-idp *)",
+      "Bash(curl -s -H 'Authorization: Bearer __CMDSUB_OUTPUT__' https://833658p105.execute-api.us-west-2.amazonaws.com/prod/v1/library/works/book-of-mormon/position)",
+      "Bash(git add *)",
+      "Bash(git commit -q -m 'M1 Flutter reader: library home, TOC with chapter chips, verse reader, resume via saved position *)",
+      "Bash(git push *)"
     ]
   }
 }

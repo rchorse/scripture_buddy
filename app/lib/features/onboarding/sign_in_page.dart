@@ -2,6 +2,7 @@ import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/api_client.dart';
+import '../reader/home_page.dart';
 
 /// M0 smoke screen: sign in against Cognito, call /v1/me, show the result.
 /// Replaced by the real onboarding flow (age gate etc.) in M5.
@@ -34,7 +35,12 @@ class _SignInPageState extends State<SignInPage> {
         return;
       }
       final me = await ApiClient().getJson('/v1/me');
-      setState(() => _status = 'Signed in as ${me['username']} (sub ${me['sub']})');
+      setState(() => _status = 'Signed in as ${me['username']}');
+      if (mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const HomePage()),
+        );
+      }
     } on Exception catch (e) {
       setState(() => _status = 'Error: $e');
     } finally {
