@@ -8,7 +8,26 @@
       "Bash(PYTHONPATH=\".venv-deps:.\" python3 -m pytest -q)",
       "Bash(python3 -m py_compile infra/app.py infra/infra/*.py api/main.py api/app/core/*.py api/app/routers/me.py api/app/jobs/bootstrap.py api/alembic/versions/*.py)",
       "Bash(aws lambda *)",
-      "Bash(PYTHONPATH=\".venv-deps:.\" CDK_DEFAULT_ACCOUNT=452379802132 cdk deploy ScriptureBuddyApi --require-approval never)"
+      "Bash(PYTHONPATH=\".venv-deps:.\" CDK_DEFAULT_ACCOUNT=452379802132 cdk deploy ScriptureBuddyApi --require-approval never)",
+      "Bash(flutter build *)",
+      "Bash(mkdir -p ~/.gradle-tmp)",
+      "Bash(GRADLE_OPTS=\"-Djava.io.tmpdir=/home/nathans/.gradle-tmp\" flutter build apk --debug --dart-define=API_URL=https://833658p105.execute-api.us-west-2.amazonaws.com/prod --dart-define=USER_POOL_ID=us-west-2_xCiNl2VUM --dart-define=USER_POOL_CLIENT_ID=it7cd8foi8mn977fld20lgtth)",
+      "Read(//home/nathans/Android/Sdk/**)",
+      "Bash(~/Android/Sdk/emulator/emulator -list-avds)",
+      "Bash(flutter emulators *)",
+      "Bash(adb devices *)",
+      "Bash(~/Android/Sdk/platform-tools/adb devices *)",
+      "Bash(~/Android/Sdk/emulator/emulator -avd Pixel7 -no-snapshot-load -no-boot-anim)",
+      "Bash(~/Android/Sdk/platform-tools/adb wait-for-device *)",
+      "Bash(~/Android/Sdk/platform-tools/adb shell *)",
+      "Bash(pkill -f \"emulator.*Pixel7\")",
+      "Bash(awk '{print $5}')",
+      "Bash(cp /home/nathans/ScriptureBuddy/app/build/app/outputs/flutter-apk/app-debug.apk /home/nathans/Downloads/scripturebuddy.apk)",
+      "Read(//home/nathans/Downloads/**)",
+      "Bash(curl -sL -o book-of-mormon.json https://raw.githubusercontent.com/bcbooks/scriptures-json/master/book-of-mormon.json)",
+      "Bash(python3 -c ' *)",
+      "Bash(PYTHONPATH=\".venv-deps:.\" python3 -m ruff check . --exclude .venv-deps --fix)",
+      "Bash(aws cloudformation *)"
     ]
   }
 }

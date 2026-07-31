@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from mangum import Mangum
 
 from app.core.db import ensure_engine, init_engine
-from app.routers import me
+from app.routers import library, me
 
 
 @asynccontextmanager
@@ -26,6 +26,7 @@ app.add_middleware(
 )
 
 app.include_router(me.router, prefix="/v1")
+app.include_router(library.router, prefix="/v1")
 
 
 @app.get("/health")
@@ -44,6 +45,24 @@ def handler(event, context):
     if task == "bootstrap_db":
         from app.jobs.bootstrap import bootstrap_database
         return bootstrap_database()
+    if task == "ingest":
+        from app.jobs.ingest import ingest_scriptures
+        return ingest_scriptures(event["work_slug"], event["s3_key"])
+    if task == "set_work_status":
+        # Owner stopgap until the M2 admin UI: flips a work between draft/released.
+        from sqlalchemy import update
+        from sqlalchemy.orm import Session as _Session
+
+        from app.core.db import get_engine
+        from app.models.content import Work
+
+        assert event["status"] in ("draft", "released")
+        with _Session(get_engine()) as s:
+            s.execute(
+                update(Work).where(Work.slug == event["work_slug"]).values(status=event["status"])
+            )
+            s.commit()
+        return {"status": "ok", "work": event["work_slug"], "set_to": event["status"]}
     if isinstance(event, dict) and event.get("warmer"):
         ensure_engine()
         return {"status": "warm"}

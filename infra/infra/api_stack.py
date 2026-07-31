@@ -14,9 +14,11 @@ from aws_cdk import (
     aws_ec2 as ec2,
     aws_events as events,
     aws_events_targets as targets,
+    aws_s3 as s3,
     aws_secretsmanager as secretsmanager,
     Duration,
     CfnOutput,
+    RemovalPolicy,
 )
 from constructs import Construct
 
@@ -89,6 +91,15 @@ class ApiStack(Stack):
         db_host = self.node.try_get_context("shared_db_host")
         admin_secret_arn = self.node.try_get_context("shared_admin_secret_arn")
 
+        # Staging bucket for content-pipeline payloads too large for a direct
+        # Lambda invoke (scripture source JSON, generated exercise batches).
+        self.data_bucket = s3.Bucket(
+            self,
+            "DataBucket",
+            block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
+            removal_policy=RemovalPolicy.RETAIN,
+        )
+
         # ScriptureBuddy's own DB credentials (sb_app role), populated by the
         # one-time {"task":"bootstrap_db"} invoke.
         self.db_secret = secretsmanager.Secret(
@@ -132,9 +143,11 @@ class ApiStack(Stack):
                 "DB_HOST": db_host,
                 "DB_NAME": "scripturebuddy",
                 "BOOTSTRAP_ADMIN_SECRET_ARN": admin_secret_arn or "",
+                "DATA_BUCKET": self.data_bucket.bucket_name,
             },
         )
 
+        self.data_bucket.grant_read(self.api_function)
         self.db_secret.grant_read(self.api_function)
         self.db_secret.grant_write(self.api_function)  # bootstrap writes sb_app creds
 
@@ -180,6 +193,7 @@ class ApiStack(Stack):
 
         CfnOutput(self, "ApiUrl", value=self.api.url)
         CfnOutput(self, "LambdaFunctionName", value=self.api_function.function_name)
+        CfnOutput(self, "DataBucketName", value=self.data_bucket.bucket_name)
 
         if custom_domain:
             api_cert = acm.Certificate(
