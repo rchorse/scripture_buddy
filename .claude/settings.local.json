@@ -37,7 +37,8 @@
       "Bash(PYTHONPATH=../.venv-deps:. python3 -c ' *)",
       "Skill(claude-api)",
       "Skill(claude-api:*)",
-      "Bash(PYTHONPATH=\"../.venv-deps:.\" python3 generate_exercises.py --source ../sources/book-of-mormon.json --book \"1 Nephi\" --kinds mcq,cloze --per-chapter 4 --out /tmp/claude-1000/-home-nathans-ScriptureBuddy/64020999-347b-4886-982c-cd179379f4dc/scratchpad/1-nephi-drafts.jsonl)"
+      "Bash(PYTHONPATH=\"../.venv-deps:.\" python3 generate_exercises.py --source ../sources/book-of-mormon.json --book \"1 Nephi\" --kinds mcq,cloze --per-chapter 4 --out /tmp/claude-1000/-home-nathans-ScriptureBuddy/64020999-347b-4886-982c-cd179379f4dc/scratchpad/1-nephi-drafts.jsonl)",
+      "Bash(git commit -q -m 'Make deploy workflow manual-only until AWS OIDC role is configured *)"
     ]
   }
 }

@@ -1,8 +1,8 @@
 name: Deploy
 
+# Manual-only until the AWS_DEPLOY_ROLE_ARN secret exists (needs an IAM OIDC
+# provider + deploy role). Re-enable the push trigger once it's configured.
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 concurrency:
