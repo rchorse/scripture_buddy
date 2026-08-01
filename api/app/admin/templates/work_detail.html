@@ -16,9 +16,14 @@
   </form>
   {% if releases %}
   <table style="margin-top:1rem">
-    <tr><th>Release</th><th>Cut at</th><th>Items</th></tr>
+    <tr><th>Release</th><th>Cut at</th><th>Items</th><th></th></tr>
     {% for r in releases %}
-    <tr><td>v{{ r.version }}</td><td>{{ r.released_at }}</td><td>{{ r.items }}</td></tr>
+    <tr>
+      <td>v{{ r.version }}</td>
+      <td>{{ r.released_at }}</td>
+      <td>{{ r.item_count }}</td>
+      <td>{% if loop.first %}<span class="pill approved">live</span>{% endif %}</td>
+    </tr>
     {% endfor %}
   </table>
   {% endif %}

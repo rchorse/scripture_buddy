@@ -52,6 +52,9 @@ def handler(event, context):
     if task == "ingest":
         from app.jobs.ingest import ingest_scriptures
         return ingest_scriptures(event["work_slug"], event["s3_key"])
+    if task == "content_gaps":
+        from app.jobs.content_gaps import content_gaps
+        return content_gaps(event["work_slug"], event.get("target", 4))
     if task == "validate_exercises":
         from app.jobs.validate_exercises import validate_exercises
         return validate_exercises(event["work_slug"])

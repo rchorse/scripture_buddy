@@ -3,12 +3,13 @@
 <h2>Dashboard</h2>
 <div class="card">
   <table>
-    <tr><th>Work</th><th>Status</th><th>Drafts</th><th>In review</th><th>Approved</th><th>Released items</th></tr>
+    <tr><th>Work</th><th>Status</th><th>Drafts</th><th>In review</th><th>Approved</th><th>Live now</th><th>Unreleased</th></tr>
     {% for row in works %}
     <tr>
       <td><a href="{{ base }}/admin/works/{{ row.slug }}">{{ row.title }}</a></td>
       <td><span class="pill {{ 'approved' if row.status == 'released' else 'ai_draft' }}">{{ row.status }}</span></td>
-      <td>{{ row.drafts }}</td><td>{{ row.in_review }}</td><td>{{ row.approved }}</td><td>{{ row.released_items }}</td>
+      <td>{{ row.drafts }}</td><td>{{ row.in_review }}</td><td>{{ row.approved }}</td><td>{{ row.live_items }}</td>
+      <td>{% if row.unreleased %}<strong style="color:#8a6d00">{{ row.unreleased }} pending</strong>{% else %}—{% endif %}</td>
     </tr>
     {% endfor %}
   </table>

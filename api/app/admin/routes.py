@@ -61,11 +61,39 @@ def dashboard(
                 .group_by(Exercise.state)
             ).all()
         )
-        released_items = db.scalar(
-            select(func.count())
-            .select_from(ReleaseItem)
-            .join(Release, ReleaseItem.release_id == Release.id)
+        # What learners can actually see: the size of the LATEST release, not
+        # the cumulative total across every release ever cut.
+        latest_release_id = db.scalar(
+            select(Release.id)
             .where(Release.work_id == work.id)
+            .order_by(Release.version.desc())
+            .limit(1)
+        )
+        live_items = (
+            db.scalar(
+                select(func.count())
+                .select_from(ReleaseItem)
+                .where(ReleaseItem.release_id == latest_release_id)
+            )
+            if latest_release_id
+            else 0
+        )
+        # Approved work that hasn't been published yet — the actionable number.
+        unreleased = db.scalar(
+            select(func.count())
+            .select_from(Exercise)
+            .join(Lesson, Exercise.lesson_id == Lesson.id)
+            .where(
+                Lesson.work_id == work.id,
+                Exercise.state == "approved",
+                ~Exercise.id.in_(
+                    select(ReleaseItem.exercise_id).where(
+                        ReleaseItem.release_id == latest_release_id
+                    )
+                )
+                if latest_release_id
+                else True,
+            )
         )
         rows.append(
             {
@@ -75,7 +103,8 @@ def dashboard(
                 "drafts": state_counts.get("ai_draft", 0),
                 "in_review": state_counts.get("in_review", 0),
                 "approved": state_counts.get("approved", 0),
-                "released_items": released_items or 0,
+                "live_items": live_items or 0,
+                "unreleased": unreleased or 0,
             }
         )
     return templates.TemplateResponse(request, "dashboard.html", {"works": rows})
@@ -111,7 +140,8 @@ def work_detail(
         {
             "version": r.version,
             "released_at": r.released_at.strftime("%Y-%m-%d %H:%M"),
-            "items": db.scalar(
+            # NOT "items" — Jinja resolves dict.items to the built-in method.
+            "item_count": db.scalar(
                 select(func.count())
                 .select_from(ReleaseItem)
                 .where(ReleaseItem.release_id == r.id)
