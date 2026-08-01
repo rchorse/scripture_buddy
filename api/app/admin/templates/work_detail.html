@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>{{ work.title }}</h2>
+<div class="card">
+  <p>Status: <span class="pill {{ 'approved' if work.status == 'released' else 'ai_draft' }}">{{ work.status }}</span></p>
+  <form method="post" action="{{ base }}/admin/works/{{ work.slug }}/status" style="display:inline">
+    <input type="hidden" name="status" value="{{ 'draft' if work.status == 'released' else 'released' }}">
+    <button type="submit" class="{{ 'danger' if work.status == 'released' else '' }}">
+      {{ 'Unpublish (back to draft)' if work.status == 'released' else 'Publish work' }}
+    </button>
+  </form>
+  <form method="post" action="{{ base }}/admin/works/{{ work.slug }}/cut-release" style="display:inline">
+    <button type="submit" {% if approved_count == 0 %}disabled title="No approved exercises"{% endif %}>
+      Cut release ({{ approved_count }} approved exercises)
+    </button>
+  </form>
+  {% if releases %}
+  <table style="margin-top:1rem">
+    <tr><th>Release</th><th>Cut at</th><th>Items</th></tr>
+    {% for r in releases %}
+    <tr><td>v{{ r.version }}</td><td>{{ r.released_at }}</td><td>{{ r.items }}</td></tr>
+    {% endfor %}
+  </table>
+  {% endif %}
+</div>
+{% endblock %}

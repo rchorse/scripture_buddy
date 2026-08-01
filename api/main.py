@@ -5,8 +5,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from mangum import Mangum
 
+from app.admin.routes import router as admin_router
 from app.core.db import ensure_engine, init_engine
-from app.routers import library, me
+from app.routers import lessons, library, me
 
 
 @asynccontextmanager
@@ -27,6 +28,8 @@ app.add_middleware(
 
 app.include_router(me.router, prefix="/v1")
 app.include_router(library.router, prefix="/v1")
+app.include_router(lessons.router, prefix="/v1")
+app.include_router(admin_router)
 
 
 @app.get("/health")
@@ -48,6 +51,9 @@ def handler(event, context):
     if task == "ingest":
         from app.jobs.ingest import ingest_scriptures
         return ingest_scriptures(event["work_slug"], event["s3_key"])
+    if task == "import_exercises":
+        from app.jobs.import_exercises import import_exercises
+        return import_exercises(event["work_slug"], event["s3_key"])
     if task == "set_work_status":
         # Owner stopgap until the M2 admin UI: flips a work between draft/released.
         from sqlalchemy import update

@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Review queue <small>({{ total }} awaiting review)</small></h2>
+{% for ex in exercises %}
+<div class="card" id="ex-{{ ex.id }}">
+  <p>
+    <strong>{{ ex.lesson_title }}</strong> · {{ ex.kind }} · difficulty {{ ex.difficulty }}
+    · <span class="pill {{ ex.state }}">{{ ex.state }}</span>
+  </p>
+  <form hx-post="{{ base }}/admin/exercises/{{ ex.id }}/decide" hx-target="#ex-{{ ex.id }}" hx-swap="outerHTML">
+    <textarea name="payload" rows="10">{{ ex.payload_json }}</textarea>
+    <p>
+      <button name="decision" value="approve">Approve</button>
+      <button name="decision" value="reject" class="danger">Reject</button>
+      <input name="review_note" placeholder="Review note (optional)" style="padding:.4rem;width:40%">
+    </p>
+  </form>
+</div>
+{% else %}
+<div class="card"><p>Queue is empty 🎉</p></div>
+{% endfor %}
+{% endblock %}

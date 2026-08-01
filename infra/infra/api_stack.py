@@ -144,6 +144,8 @@ class ApiStack(Stack):
                 "DB_NAME": "scripturebuddy",
                 "BOOTSTRAP_ADMIN_SECRET_ARN": admin_secret_arn or "",
                 "DATA_BUCKET": self.data_bucket.bucket_name,
+                # Admin UI URL prefix: API GW stage until a custom domain exists.
+                "URL_PREFIX": "/prod",
             },
         )
 

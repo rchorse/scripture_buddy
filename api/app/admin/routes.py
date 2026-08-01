@@ -1,0 +1,219 @@
+import json
+import os
+
+from fastapi import APIRouter, Depends, Form, HTTPException, Request
+from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.templating import Jinja2Templates
+from sqlalchemy import func, select
+from sqlalchemy.orm import Session
+
+from app.admin.auth import COOKIE_NAME, cognito_login, require_owner
+from app.core.db import get_db
+from app.models.content import Exercise, Lesson, Release, ReleaseItem, Work
+from app.services.releases import cut_release
+
+router = APIRouter(prefix="/admin", include_in_schema=False)
+
+# API Gateway serves the app under a stage prefix (/prod) until a custom domain
+# exists; every absolute URL the admin emits must carry it.
+BASE = os.environ.get("URL_PREFIX", "")
+
+templates = Jinja2Templates(
+    directory=os.path.join(os.path.dirname(__file__), "templates")
+)
+templates.env.globals["base"] = BASE
+
+
+@router.get("/login", response_class=HTMLResponse)
+def login_page(request: Request):
+    return templates.TemplateResponse(request, "login.html", {"error": None})
+
+
+@router.post("/login")
+def login(request: Request, username: str = Form(...), password: str = Form(...)):
+    try:
+        token = cognito_login(username, password)
+    except HTTPException:
+        return templates.TemplateResponse(
+            request, "login.html", {"error": "Invalid credentials"}, status_code=401
+        )
+    response = RedirectResponse(f"{BASE}/admin", status_code=303)
+    response.set_cookie(
+        COOKIE_NAME, token, httponly=True, secure=True, samesite="lax", max_age=3600
+    )
+    return response
+
+
+@router.get("", response_class=HTMLResponse)
+def dashboard(
+    request: Request,
+    claims: dict = Depends(require_owner),
+    db: Session = Depends(get_db),
+):
+    works = db.scalars(select(Work).order_by(Work.title)).all()
+    rows = []
+    for work in works:
+        state_counts = dict(
+            db.execute(
+                select(Exercise.state, func.count())
+                .join(Lesson, Exercise.lesson_id == Lesson.id)
+                .where(Lesson.work_id == work.id)
+                .group_by(Exercise.state)
+            ).all()
+        )
+        released_items = db.scalar(
+            select(func.count())
+            .select_from(ReleaseItem)
+            .join(Release, ReleaseItem.release_id == Release.id)
+            .where(Release.work_id == work.id)
+        )
+        rows.append(
+            {
+                "slug": work.slug,
+                "title": work.title,
+                "status": work.status,
+                "drafts": state_counts.get("ai_draft", 0),
+                "in_review": state_counts.get("in_review", 0),
+                "approved": state_counts.get("approved", 0),
+                "released_items": released_items or 0,
+            }
+        )
+    return templates.TemplateResponse(request, "dashboard.html", {"works": rows})
+
+
+def _work_or_404(db: Session, slug: str) -> Work:
+    work = db.scalar(select(Work).where(Work.slug == slug))
+    if work is None:
+        raise HTTPException(status_code=404)
+    return work
+
+
+@router.get("/works", response_class=HTMLResponse)
+def works_index(request: Request, claims: dict = Depends(require_owner)):
+    return RedirectResponse(f"{BASE}/admin", status_code=303)
+
+
+@router.get("/works/{slug}", response_class=HTMLResponse)
+def work_detail(
+    slug: str,
+    request: Request,
+    claims: dict = Depends(require_owner),
+    db: Session = Depends(get_db),
+):
+    work = _work_or_404(db, slug)
+    approved_count = db.scalar(
+        select(func.count())
+        .select_from(Exercise)
+        .join(Lesson, Exercise.lesson_id == Lesson.id)
+        .where(Lesson.work_id == work.id, Exercise.state == "approved")
+    )
+    releases = [
+        {
+            "version": r.version,
+            "released_at": r.released_at.strftime("%Y-%m-%d %H:%M"),
+            "items": db.scalar(
+                select(func.count())
+                .select_from(ReleaseItem)
+                .where(ReleaseItem.release_id == r.id)
+            ),
+        }
+        for r in db.scalars(
+            select(Release).where(Release.work_id == work.id).order_by(Release.version.desc())
+        )
+    ]
+    return templates.TemplateResponse(
+        request,
+        "work_detail.html",
+        {"work": work, "approved_count": approved_count or 0, "releases": releases},
+    )
+
+
+@router.post("/works/{slug}/status")
+def set_status(
+    slug: str,
+    status: str = Form(...),
+    claims: dict = Depends(require_owner),
+    db: Session = Depends(get_db),
+):
+    if status not in ("draft", "released"):
+        raise HTTPException(status_code=400)
+    work = _work_or_404(db, slug)
+    work.status = status
+    db.commit()
+    return RedirectResponse(f"{BASE}/admin/works/{slug}", status_code=303)
+
+
+@router.post("/works/{slug}/cut-release")
+def cut_release_route(
+    slug: str,
+    claims: dict = Depends(require_owner),
+    db: Session = Depends(get_db),
+):
+    work = _work_or_404(db, slug)
+    cut_release(db, work)
+    return RedirectResponse(f"{BASE}/admin/works/{slug}", status_code=303)
+
+
+@router.get("/review", response_class=HTMLResponse)
+def review_queue(
+    request: Request,
+    claims: dict = Depends(require_owner),
+    db: Session = Depends(get_db),
+):
+    pending = db.execute(
+        select(Exercise, Lesson.title)
+        .join(Lesson, Exercise.lesson_id == Lesson.id)
+        .where(Exercise.state.in_(["ai_draft", "in_review"]))
+        .order_by(Lesson.position, Exercise.kind)
+        .limit(25)
+    ).all()
+    total = db.scalar(
+        select(func.count())
+        .select_from(Exercise)
+        .where(Exercise.state.in_(["ai_draft", "in_review"]))
+    )
+    exercises = [
+        {
+            "id": str(ex.id),
+            "kind": ex.kind,
+            "difficulty": ex.difficulty,
+            "state": ex.state,
+            "lesson_title": lesson_title,
+            "payload_json": json.dumps(ex.payload, indent=2, ensure_ascii=False),
+        }
+        for ex, lesson_title in pending
+    ]
+    return templates.TemplateResponse(
+        request, "review.html", {"exercises": exercises, "total": total or 0}
+    )
+
+
+@router.post("/exercises/{exercise_id}/decide", response_class=HTMLResponse)
+def decide_exercise(
+    exercise_id: str,
+    request: Request,
+    decision: str = Form(...),
+    payload: str = Form(...),
+    review_note: str = Form(""),
+    claims: dict = Depends(require_owner),
+    db: Session = Depends(get_db),
+):
+    exercise = db.get(Exercise, exercise_id)
+    if exercise is None:
+        raise HTTPException(status_code=404)
+    if decision not in ("approve", "reject"):
+        raise HTTPException(status_code=400)
+    try:
+        exercise.payload = json.loads(payload)
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail="Payload is not valid JSON")
+    exercise.state = "approved" if decision == "approve" else "rejected"
+    exercise.review_note = review_note
+    exercise.created_by = "owner" if decision == "approve" else exercise.created_by
+    lesson_title = db.get(Lesson, exercise.lesson_id).title
+    db.commit()
+    return templates.TemplateResponse(
+        request,
+        "_exercise_done.html",
+        {"lesson_title": lesson_title, "kind": exercise.kind, "state": exercise.state},
+    )

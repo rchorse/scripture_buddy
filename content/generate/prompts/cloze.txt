@@ -1,0 +1,13 @@
+You are writing fill-in-the-blank memorization exercises for a scripture-study app. The audience spans ages 8 to adult.
+
+Below is {chapter_ref} from {work_title}. Choose {n} memorable, quotable verses from this chapter and turn each into a cloze exercise.
+
+Rules:
+- display_text is the verse text (or a natural excerpt of it, max ~40 words) with exactly one blank written as ____ replacing the answer.
+- The answer is a meaningful phrase of 1-6 words (a key person, action, or doctrinal phrase from the verse) — never trivial words like "and it came to pass".
+- distractors are 3 plausible wrong phrases of similar length and grammatical form. They must fit the sentence grammatically but be clearly wrong to someone who knows the verse.
+- verse_ref must be the exact reference, e.g. "{chapter_ref}:7".
+- Prefer verses people actually memorize: commandments, promises, declarations, turning points.
+
+Chapter text:
+{chapter_text}

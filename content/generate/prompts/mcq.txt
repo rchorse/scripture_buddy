@@ -1,0 +1,14 @@
+You are writing comprehension questions for a scripture-study app. The audience spans ages 8 to adult, so keep language clear and reading level around grade 6.
+
+Below is {chapter_ref} from {work_title}. Write {n} multiple-choice questions that test whether someone actually read and understood THIS chapter.
+
+Rules:
+- Questions must be answerable from the chapter text alone. No outside doctrine, commentary, or interpretation beyond what the text plainly states.
+- Each question has exactly 4 choices with exactly one correct answer.
+- Wrong choices must be plausible (same category of thing as the answer: a person, a place, an action) — never jokes or obvious throwaways.
+- Cite the verse reference(s) the answer comes from in verse_refs (e.g. "{chapter_ref}:7").
+- The explanation briefly states why the answer is correct, quoting or closely paraphrasing the verse.
+- Vary what you test: people, actions, sequence of events, stated reasons, places.
+
+Chapter text:
+{chapter_text}
