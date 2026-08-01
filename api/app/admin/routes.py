@@ -130,12 +130,41 @@ def work_detail(
     db: Session = Depends(get_db),
 ):
     work = _work_or_404(db, slug)
-    approved_count = db.scalar(
+    latest_release_id = db.scalar(
+        select(Release.id)
+        .where(Release.work_id == work.id)
+        .order_by(Release.version.desc())
+        .limit(1)
+    )
+    in_latest = (
+        select(ReleaseItem.exercise_id).where(ReleaseItem.release_id == latest_release_id)
+        if latest_release_id
+        else None
+    )
+
+    # What cutting a release would actually change, rather than the total.
+    approved_q = (
         select(func.count())
         .select_from(Exercise)
         .join(Lesson, Exercise.lesson_id == Lesson.id)
         .where(Lesson.work_id == work.id, Exercise.state == "approved")
     )
+    if in_latest is None:
+        new_count = db.scalar(approved_q)
+        removed_count = 0
+    else:
+        new_count = db.scalar(approved_q.where(~Exercise.id.in_(in_latest)))
+        # Items in the live release that are no longer approved (retired or
+        # rejected since) would drop out of the next release.
+        removed_count = db.scalar(
+            select(func.count())
+            .select_from(ReleaseItem)
+            .join(Exercise, Exercise.id == ReleaseItem.exercise_id)
+            .where(
+                ReleaseItem.release_id == latest_release_id,
+                Exercise.state != "approved",
+            )
+        )
     releases = [
         {
             "version": r.version,
@@ -154,7 +183,12 @@ def work_detail(
     return templates.TemplateResponse(
         request,
         "work_detail.html",
-        {"work": work, "approved_count": approved_count or 0, "releases": releases},
+        {
+            "work": work,
+            "new_count": new_count or 0,
+            "removed_count": removed_count or 0,
+            "releases": releases,
+        },
     )
 
 

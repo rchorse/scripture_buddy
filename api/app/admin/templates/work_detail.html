@@ -10,8 +10,13 @@
     </button>
   </form>
   <form method="post" action="{{ base }}/admin/works/{{ work.slug }}/cut-release" style="display:inline">
-    <button type="submit" {% if approved_count == 0 %}disabled title="No approved exercises"{% endif %}>
-      Cut release ({{ approved_count }} approved exercises)
+    <button type="submit"
+      {% if new_count == 0 and removed_count == 0 %}disabled title="Nothing new to release"{% endif %}>
+      {%- if new_count == 0 and removed_count == 0 -%}
+        Cut release (nothing new)
+      {%- else -%}
+        Cut release ({{ new_count }} new{% if removed_count %}, {{ removed_count }} removed{% endif %})
+      {%- endif -%}
     </button>
   </form>
   {% if releases %}
