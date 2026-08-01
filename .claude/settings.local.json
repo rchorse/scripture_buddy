@@ -47,7 +47,12 @@
       "Bash(curl -s -X POST -H 'Authorization: Bearer __CMDSUB_OUTPUT__' -H 'Content-Type: application/json' -d '{\"reason\":\"wrong_answer\"}' https://833658p105.execute-api.us-west-2.amazonaws.com/prod/v1/lessons/exercises/03f22824-e105-4d1f-a414-3e015e1d1266/flag)",
       "Bash(curl -s -o /dev/null -w '%{http_code}\\\\n' -X POST -H 'Authorization: Bearer __CMDSUB_OUTPUT__' -H 'Content-Type: application/json' -d '{\"reason\":\"bogus\"}' https://833658p105.execute-api.us-west-2.amazonaws.com/prod/v1/lessons/exercises/03f22824-e105-4d1f-a414-3e015e1d1266/flag)",
       "Bash(curl -s -c /tmp/claude-1000/-home-nathans-ScriptureBuddy/64020999-347b-4886-982c-cd179379f4dc/scratchpad/c.txt -X POST -d 'username=nathan-test&password=M0-smoke-Pass1' https://833658p105.execute-api.us-west-2.amazonaws.com/prod/admin/login -o /dev/null)",
-      "Bash(curl -s -b /tmp/claude-1000/-home-nathans-ScriptureBuddy/64020999-347b-4886-982c-cd179379f4dc/scratchpad/c.txt https://833658p105.execute-api.us-west-2.amazonaws.com/prod/admin/flags)"
+      "Bash(curl -s -b /tmp/claude-1000/-home-nathans-ScriptureBuddy/64020999-347b-4886-982c-cd179379f4dc/scratchpad/c.txt https://833658p105.execute-api.us-west-2.amazonaws.com/prod/admin/flags)",
+      "Bash(PYTHONPATH=\".venv-deps:.\" python3 -m pytest tests/test_srs.py -q)",
+      "Bash(PYTHONPATH=.venv-deps:. python3 -c ' *)",
+      "Bash(flutter analyze *)",
+      "Bash(flutter test *)",
+      "Bash(git commit -q -m 'M3: learning engine — FSRS-lite spaced repetition, server-side grading, lesson player *)"
     ]
   }
 }

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../lessons/lesson_player_page.dart';
+import '../lessons/lessons_api.dart';
 import 'library_api.dart';
 import 'library_models.dart';
 import 'toc_page.dart';
@@ -42,6 +44,24 @@ class _HomePageState extends State<HomePage> {
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
+              Card(
+                color: Theme.of(context).colorScheme.primaryContainer,
+                child: ListTile(
+                  leading: const Icon(Icons.psychology),
+                  title: const Text('Daily review'),
+                  subtitle: const Text('Verses due for practice'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => LessonPlayerPage(
+                        title: 'Daily review',
+                        load: () => LessonsApi().dueReviews(),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
               for (final work in works)
                 Card(
                   child: ListTile(

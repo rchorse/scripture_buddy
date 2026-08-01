@@ -7,7 +7,7 @@ from mangum import Mangum
 
 from app.admin.routes import router as admin_router
 from app.core.db import ensure_engine, init_engine
-from app.routers import lessons, library, me
+from app.routers import lessons, library, me, reviews
 
 
 @asynccontextmanager
@@ -29,6 +29,7 @@ app.add_middleware(
 app.include_router(me.router, prefix="/v1")
 app.include_router(library.router, prefix="/v1")
 app.include_router(lessons.router, prefix="/v1")
+app.include_router(reviews.router, prefix="/v1")
 app.include_router(admin_router)
 
 

@@ -9,6 +9,7 @@ from app.core.principal import get_current_user
 from app.models.content import Exercise, Lesson, Release, ReleaseItem
 from app.models.core import User
 from app.services.flags import flag_exercise
+from app.services.grading import presentation_for
 
 router = APIRouter(prefix="/lessons", tags=["lessons"])
 
@@ -83,8 +84,14 @@ def exercises_for_lesson(
             Exercise.state != "retired",
         )
     ).all()
+    # Never ship the answer to the client — only the presentation view.
     return [
-        {"id": str(e.id), "kind": e.kind, "difficulty": e.difficulty, "payload": e.payload}
+        {
+            "id": str(e.id),
+            "kind": e.kind,
+            "difficulty": e.difficulty,
+            **presentation_for(e.kind, e.payload, f"{e.id}:{user.id}"),
+        }
         for e in exercises
     ]
 
