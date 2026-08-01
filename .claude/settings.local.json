@@ -33,7 +33,11 @@
       "Bash(git add *)",
       "Bash(git commit -q -m 'M1 Flutter reader: library home, TOC with chapter chips, verse reader, resume via saved position *)",
       "Bash(git push *)",
-      "Bash(cd /home/nathans/ScriptureBuddy/app && GRADLE_OPTS=\"-Djava.io.tmpdir=/home/nathans/.gradle-tmp\" flutter build apk --debug --dart-define=API_URL=https://833658p105.execute-api.us-west-2.amazonaws.com/prod --dart-define=USER_POOL_ID=us-west-2_xCiNl2VUM --dart-define=USER_POOL_CLIENT_ID=it7cd8foi8mn977fld20lgtth 2>&1 | tail -2 && cp build/app/outputs/flutter-apk/app-debug.apk /home/nathans/Downloads/scripturebuddy.apk && echo \"APK refreshed at ~/Downloads/scripturebuddy.apk\")"
+      "Bash(cd /home/nathans/ScriptureBuddy/app && GRADLE_OPTS=\"-Djava.io.tmpdir=/home/nathans/.gradle-tmp\" flutter build apk --debug --dart-define=API_URL=https://833658p105.execute-api.us-west-2.amazonaws.com/prod --dart-define=USER_POOL_ID=us-west-2_xCiNl2VUM --dart-define=USER_POOL_CLIENT_ID=it7cd8foi8mn977fld20lgtth 2>&1 | tail -2 && cp build/app/outputs/flutter-apk/app-debug.apk /home/nathans/Downloads/scripturebuddy.apk && echo \"APK refreshed at ~/Downloads/scripturebuddy.apk\")",
+      "Bash(PYTHONPATH=../.venv-deps:. python3 -c ' *)",
+      "Skill(claude-api)",
+      "Skill(claude-api:*)",
+      "Bash(PYTHONPATH=\"../.venv-deps:.\" python3 generate_exercises.py --source ../sources/book-of-mormon.json --book \"1 Nephi\" --kinds mcq,cloze --per-chapter 4 --out /tmp/claude-1000/-home-nathans-ScriptureBuddy/64020999-347b-4886-982c-cd179379f4dc/scratchpad/1-nephi-drafts.jsonl)"
     ]
   }
 }

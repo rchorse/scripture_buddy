@@ -11,18 +11,35 @@ validates every result against content/generate/schemas.py, and writes valid
 exercises to a JSONL file ready for the {"task":"import_exercises"} Lambda
 invoke (upload the JSONL to the data bucket first).
 
-Requires ANTHROPIC_API_KEY. Uses the 50%-discounted Batches API; a full book
-at 4 exercises/kind/chapter lands well under typical per-book budget.
+Reads the API key from AWS Secrets Manager (scripturebuddy/anthropic-api-key),
+falling back to the ANTHROPIC_API_KEY environment variable. Uses the
+50%-discounted Batches API.
 """
 import argparse
 import json
+import os
 import sys
 import time
 from pathlib import Path
 
 import anthropic
+import boto3
 
-from schemas import PAYLOAD_SCHEMAS
+from schemas import PAYLOAD_SCHEMAS, api_json_schema
+
+SECRET_ID = "scripturebuddy/anthropic-api-key"
+
+
+def api_key() -> str:
+    if os.environ.get("ANTHROPIC_API_KEY"):
+        return os.environ["ANTHROPIC_API_KEY"]
+    client = boto3.client("secretsmanager", region_name=os.environ.get("AWS_REGION", "us-west-2"))
+    secret = client.get_secret_value(SecretId=SECRET_ID)["SecretString"]
+    # Accept either a bare key or {"api_key": "..."} shaped secret.
+    try:
+        return json.loads(secret)["api_key"]
+    except (json.JSONDecodeError, KeyError, TypeError):
+        return secret.strip()
 
 MODEL = "claude-opus-5"
 PROMPTS_DIR = Path(__file__).parent / "prompts"
@@ -66,7 +83,7 @@ def build_batch(client: anthropic.Anthropic, requests_iter) -> tuple[str, dict]:
                     "output_config": {
                         "format": {
                             "type": "json_schema",
-                            "schema": schema.model_json_schema(),
+                            "schema": api_json_schema(schema),
                         }
                     },
                 },
@@ -141,7 +158,7 @@ def main() -> None:
         if kind not in PAYLOAD_SCHEMAS:
             sys.exit(f"Unknown kind: {kind}")
 
-    client = anthropic.Anthropic()
+    client = anthropic.Anthropic(api_key=api_key())
     reqs = list(chapter_requests(source, args.book, kinds, args.per_chapter))
     print(f"Submitting batch: {len(reqs)} requests ({args.kinds}) via {MODEL}")
     batch_id, meta = build_batch(client, iter(reqs))

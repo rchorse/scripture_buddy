@@ -7,7 +7,13 @@ from pydantic import BaseModel, Field, field_validator
 
 
 class McqPayload(BaseModel):
-    """Multiple-choice comprehension question about a chapter."""
+    """Multiple-choice comprehension question about a chapter.
+
+    Field constraints the API's json_schema doesn't accept (min_length etc.) are
+    still enforced client-side by pydantic when validating model output.
+    """
+
+    model_config = {"extra": "forbid"}
 
     question: str = Field(min_length=10, max_length=300)
     choices: list[str] = Field(min_length=4, max_length=4)
@@ -26,6 +32,8 @@ class McqPayload(BaseModel):
 class ClozePayload(BaseModel):
     """Fill-in-the-blank on a single verse; blank replaces a meaningful phrase."""
 
+    model_config = {"extra": "forbid"}
+
     verse_ref: str
     display_text: str = Field(description="Verse text with ____ where the answer goes")
     answer: str = Field(min_length=2, max_length=80)
@@ -40,11 +48,47 @@ class ClozePayload(BaseModel):
 
 
 class McqBatch(BaseModel):
+    model_config = {"extra": "forbid"}
+
     exercises: list[McqPayload] = Field(min_length=1, max_length=6)
 
 
 class ClozeBatch(BaseModel):
+    model_config = {"extra": "forbid"}
+
     exercises: list[ClozePayload] = Field(min_length=1, max_length=6)
 
 
 PAYLOAD_SCHEMAS = {"mcq": McqBatch, "cloze": ClozeBatch}
+
+# Constraint keywords the structured-outputs API rejects. Pydantic still applies
+# them when validating responses; they just can't ride along in the schema.
+_UNSUPPORTED_KEYWORDS = (
+    "minLength",
+    "maxLength",
+    "minItems",
+    "maxItems",
+    "minimum",
+    "maximum",
+    "exclusiveMinimum",
+    "exclusiveMaximum",
+    "multipleOf",
+    "pattern",
+)
+
+
+def api_json_schema(model: type[BaseModel]) -> dict:
+    """Pydantic JSON schema trimmed to what output_config.format accepts."""
+
+    def clean(node):
+        if isinstance(node, dict):
+            out = {k: clean(v) for k, v in node.items() if k not in _UNSUPPORTED_KEYWORDS}
+            if out.get("type") == "object":
+                out["additionalProperties"] = False
+                out.setdefault("required", list(out.get("properties", {})))
+            return out
+        if isinstance(node, list):
+            return [clean(item) for item in node]
+        return node
+
+    return clean(model.model_json_schema())
