@@ -6,7 +6,8 @@ Approved plan: `~/.claude/plans/steady-dreaming-cray.md` (architecture, mileston
 - **No chat/messaging features. Ever.** This was a final product decision; the only user-visible UGC is custom display names (Haiku-checked, fail-closed).
 - Under-13 users are supported → full COPPA (2026 rule). Child accounts are username-only: never store email/phone/real-name/geolocation for minors. Age bracket is computed server-side from birth_date, never trusted from the client.
 - No ads SDKs. Monetization goes through the `entitlements` table only.
-- Clients only see released content (`releases`/`release_items`), never raw `exercises` state.
+- Clients only see released content (`releases`/`release_items`), never raw `exercises` state. Retired exercises stay in the release snapshot but are excluded at serve time.
+- Generated exercises are **auto-approved by mechanical validation** against the source scripture (`api/app/services/exercise_validation.py`), not per-item human review. Anything that fails validation lands in `/admin/review` with the reason. Learner flags go to `/admin/flags` for **manual** owner decision — flags never retire an item automatically.
 
 ## Stack
 - Flutter app (`app/`), FastAPI on Lambda via Mangum (`api/`), CDK Python (`infra/`), Postgres on shared Aurora Serverless v2 (database `scripturebuddy`, role `sb_app`).

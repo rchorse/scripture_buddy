@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -8,6 +8,7 @@ from app.core.db import get_db
 from app.core.principal import get_current_user
 from app.models.content import Exercise, Lesson, Release, ReleaseItem
 from app.models.core import User
+from app.services.flags import flag_exercise
 
 router = APIRouter(prefix="/lessons", tags=["lessons"])
 
@@ -44,6 +45,9 @@ def lessons_for_division(
                 .where(
                     ReleaseItem.release_id == release_id,
                     Exercise.lesson_id == lesson.id,
+                    # Retired items stay in the release snapshot but must stop
+                    # being served the moment they're pulled.
+                    Exercise.state != "retired",
                 )
             )
         if count:
@@ -73,9 +77,35 @@ def exercises_for_lesson(
     exercises = db.scalars(
         select(Exercise)
         .join(ReleaseItem, ReleaseItem.exercise_id == Exercise.id)
-        .where(ReleaseItem.release_id == release_id, Exercise.lesson_id == lesson_id)
+        .where(
+            ReleaseItem.release_id == release_id,
+            Exercise.lesson_id == lesson_id,
+            Exercise.state != "retired",
+        )
     ).all()
     return [
         {"id": str(e.id), "kind": e.kind, "difficulty": e.difficulty, "payload": e.payload}
         for e in exercises
     ]
+
+
+@router.post("/exercises/{exercise_id}/flag")
+def flag(
+    exercise_id: UUID,
+    body: dict,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Learner reports a bad exercise. Enough reports retire it automatically."""
+    if db.get(Exercise, exercise_id) is None:
+        raise HTTPException(status_code=404, detail="Unknown exercise")
+    try:
+        return flag_exercise(
+            db,
+            exercise_id,
+            user.id,
+            reason=body.get("reason", "other"),
+            note=body.get("note", ""),
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))

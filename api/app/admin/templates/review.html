@@ -7,6 +7,11 @@
     <strong>{{ ex.lesson_title }}</strong> · {{ ex.kind }} · difficulty {{ ex.difficulty }}
     · <span class="pill {{ ex.state }}">{{ ex.state }}</span>
   </p>
+  {% if ex.review_note %}
+  <p style="background:#fdf3d8;border-left:3px solid #8a6d00;padding:.5rem .75rem;margin:.5rem 0">
+    <strong>Held because:</strong> {{ ex.review_note }}
+  </p>
+  {% endif %}
   <form hx-post="{{ base }}/admin/exercises/{{ ex.id }}/decide" hx-target="#ex-{{ ex.id }}" hx-swap="outerHTML">
     <textarea name="payload" rows="10">{{ ex.payload_json }}</textarea>
     <p>

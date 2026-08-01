@@ -184,6 +184,38 @@ class ReleaseItem(Base):
     )
 
 
+class ExerciseFlag(Base):
+    """A learner reporting that an exercise is wrong.
+
+    This is the safety net that replaces per-item human review: enough flags
+    on one exercise automatically retires it from circulation pending owner
+    review, so a bad item stops being served without anyone being on call.
+    Reason is a fixed enum; `note` is free text visible only to the owner.
+    """
+
+    __tablename__ = "exercise_flags"
+    __table_args__ = (
+        UniqueConstraint("exercise_id", "user_id", name="uq_exercise_flags_once"),
+        CheckConstraint(
+            "reason IN ('wrong_answer','confusing','not_in_text','typo','other')",
+            name="reason_valid",
+        ),
+        {"schema": SCHEMA},
+    )
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    exercise_id: Mapped[uuid.UUID] = mapped_column(ForeignKey(f"{SCHEMA}.exercises.id"))
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True))
+    reason: Mapped[str] = mapped_column(Text)
+    note: Mapped[str] = mapped_column(Text, default="")
+    resolved_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=text("now()")
+    )
+
+
 class BookRequest(Base):
     __tablename__ = "book_requests"
     __table_args__ = (

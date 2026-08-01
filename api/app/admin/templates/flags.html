@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Flagged exercises <small>({{ total }} unresolved)</small></h2>
+<p style="color:#555">Flagged exercises keep being served until you decide. Retire pulls an item from circulation; dismiss clears the flags and leaves it live.</p>
+{% for row in rows %}
+<div class="card" id="flag-{{ row.id }}">
+  <p>
+    <strong>{{ row.lesson_title }}</strong> · {{ row.kind }}
+    · <span class="pill {{ row.state }}">{{ row.state }}</span>
+    · <strong>{{ row.flag_count }}</strong> flag{{ '' if row.flag_count == 1 else 's' }}
+  </p>
+  <ul>
+    {% for f in row.flags %}
+    <li>{{ f.reason }}{% if f.note %} — “{{ f.note }}”{% endif %} <em style="color:#777">{{ f.created_at }}</em></li>
+    {% endfor %}
+  </ul>
+  <details>
+    <summary>Payload</summary>
+    <pre style="white-space:pre-wrap;font-size:.85rem">{{ row.payload_json }}</pre>
+  </details>
+  <form hx-post="{{ base }}/admin/flags/{{ row.id }}/resolve" hx-target="#flag-{{ row.id }}" hx-swap="outerHTML">
+    <button name="action" value="retire" class="danger">Retire permanently</button>
+    <button name="action" value="dismiss" class="secondary">Dismiss flags (restore)</button>
+  </form>
+</div>
+{% else %}
+<div class="card"><p>No flagged exercises 🎉</p></div>
+{% endfor %}
+{% endblock %}

@@ -4,12 +4,12 @@ import os
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-from sqlalchemy import func, select
+from sqlalchemy import func, select, update
 from sqlalchemy.orm import Session
 
 from app.admin.auth import COOKIE_NAME, cognito_login, require_owner
 from app.core.db import get_db
-from app.models.content import Exercise, Lesson, Release, ReleaseItem, Work
+from app.models.content import Exercise, ExerciseFlag, Lesson, Release, ReleaseItem, Work
 from app.services.releases import cut_release
 
 router = APIRouter(prefix="/admin", include_in_schema=False)
@@ -179,12 +179,107 @@ def review_queue(
             "difficulty": ex.difficulty,
             "state": ex.state,
             "lesson_title": lesson_title,
+            "review_note": ex.review_note,
             "payload_json": json.dumps(ex.payload, indent=2, ensure_ascii=False),
         }
         for ex, lesson_title in pending
     ]
     return templates.TemplateResponse(
         request, "review.html", {"exercises": exercises, "total": total or 0}
+    )
+
+
+@router.get("/flags", response_class=HTMLResponse)
+def flags_queue(
+    request: Request,
+    claims: dict = Depends(require_owner),
+    db: Session = Depends(get_db),
+):
+    counts = (
+        select(
+            ExerciseFlag.exercise_id.label("exercise_id"),
+            func.count().label("flag_count"),
+        )
+        .where(ExerciseFlag.resolved_at.is_(None))
+        .group_by(ExerciseFlag.exercise_id)
+        .subquery()
+    )
+    pending = db.execute(
+        select(Exercise, Lesson.title, counts.c.flag_count)
+        .join(Lesson, Exercise.lesson_id == Lesson.id)
+        .join(counts, counts.c.exercise_id == Exercise.id)
+        .order_by(counts.c.flag_count.desc())
+        .limit(50)
+    ).all()
+
+    rows = []
+    for exercise, lesson_title, flag_count in pending:
+        flags = db.scalars(
+            select(ExerciseFlag)
+            .where(
+                ExerciseFlag.exercise_id == exercise.id,
+                ExerciseFlag.resolved_at.is_(None),
+            )
+            .order_by(ExerciseFlag.created_at)
+        ).all()
+        rows.append(
+            {
+                "id": str(exercise.id),
+                "kind": exercise.kind,
+                "state": exercise.state,
+                "lesson_title": lesson_title,
+                "flag_count": flag_count,
+                "payload_json": json.dumps(exercise.payload, indent=2, ensure_ascii=False),
+                "flags": [
+                    {
+                        "reason": f.reason,
+                        "note": f.note,
+                        "created_at": f.created_at.strftime("%Y-%m-%d %H:%M"),
+                    }
+                    for f in flags
+                ],
+            }
+        )
+    return templates.TemplateResponse(
+        request,
+        "flags.html",
+        {"rows": rows, "total": len(rows)},
+    )
+
+
+@router.post("/flags/{exercise_id}/resolve", response_class=HTMLResponse)
+def resolve_flags(
+    exercise_id: str,
+    request: Request,
+    action: str = Form(...),
+    claims: dict = Depends(require_owner),
+    db: Session = Depends(get_db),
+):
+    exercise = db.get(Exercise, exercise_id)
+    if exercise is None:
+        raise HTTPException(status_code=404)
+    if action not in ("retire", "dismiss"):
+        raise HTTPException(status_code=400)
+    db.execute(
+        update(ExerciseFlag)
+        .where(
+            ExerciseFlag.exercise_id == exercise.id,
+            ExerciseFlag.resolved_at.is_(None),
+        )
+        .values(resolved_at=func.now())
+    )
+    if action == "retire":
+        exercise.state = "retired"
+        exercise.review_note = "retired by owner after learner flags"
+    else:
+        exercise.state = "approved"
+        exercise.review_note = "flags dismissed by owner"
+    lesson_title = db.get(Lesson, exercise.lesson_id).title
+    db.commit()
+    return templates.TemplateResponse(
+        request,
+        "_flag_done.html",
+        {"lesson_title": lesson_title, "kind": exercise.kind, "state": exercise.state},
     )
 
 
