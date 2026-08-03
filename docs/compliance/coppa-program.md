@@ -68,15 +68,18 @@ and confirm consent and for account recovery.
 
 **Why this method is appropriate.** The FTC permits a less rigorous method where
 the operator does not disclose children's personal information to third parties
-or make it publicly available. ScriptureBuddy has no chat or messaging, shows no
-ads, sells or shares no data, and uses AWS and Anthropic strictly as service
-providers under contract. **This determination must be confirmed by counsel.**
+or make it publicly available. ScriptureBuddy does neither:
 
-> ⚠️ **Open item:** friends and leaderboards make a child's display name visible
-> to other users, which may require a more rigorous method for that use. The
-> `social` consent scope is separate precisely so a stricter method can be
-> required for it, or so under-13 social can remain disabled. Decide before
-> enabling social features for under-13 accounts.
+- No chat or messaging of any kind.
+- **No social features for under-13 accounts, ever** — a child's display name,
+  progress, and existence are never visible to any other user. This is a fixed
+  product decision enforced in `app/services/friendships.py`, not a setting.
+- No advertising or analytics SDKs; nothing sold or shared.
+- AWS and Anthropic act strictly as service providers under contract.
+
+A child's personal information therefore never leaves the operator's control,
+which is precisely the condition the lighter method is designed for.
+**This determination should still be confirmed by counsel.**
 
 ### Per-scope consent
 
@@ -87,10 +90,11 @@ Consent is recorded **per scope** and is independently revocable:
 |---|---|
 | `account` | Creating and using the account. **Required** — without it the account is disabled. |
 | `ai_processing` | Sending answer text to Anthropic for grading assistance and content generation. |
-| `social` | Being visible to approved friends and on leaderboards. |
 
-Consent is **never** used as a condition of participation beyond what the
-service requires: a child may use the app with only `account` consent.
+There is deliberately **no `social` scope**: under-13 accounts have no social
+surface, so there is nothing to consent to. Consent is never used as a condition
+of participation beyond what the service requires — a child may use the app with
+only `account` consent.
 
 ## 5. Parental rights
 
@@ -98,7 +102,7 @@ service requires: a child may use the app with only `account` consent.
 |---|---|---|
 | Review what we hold | Family screen in the app | Shows the child's data |
 | Withdraw consent | Family screen → revoke | Account disabled **immediately** |
-| Refuse further collection | Revoke `ai_processing` / `social` | That use stops; account still works |
+| Refuse further collection | Revoke `ai_processing` | That use stops; account still works |
 | Delete the child's data | Family screen → delete | Disabled at once; irreversible purge after 30 days |
 
 Parental authority ends automatically at 18 (`require_parent_of` refuses once
@@ -158,8 +162,11 @@ recorded in `CLAUDE.md`.
 This program is reviewed:
 - Before public launch (with counsel).
 - At least annually thereafter.
-- Whenever a new category of data is collected, a new service provider is added,
-  or a social/sharing feature is enabled for under-13 accounts.
+- Whenever a new category of data is collected or a new service provider is
+  added.
+- **If under-13 social features are ever contemplated** (currently ruled out),
+  the consent method must be re-assessed first — the justification for
+  email-plus rests partly on nothing about a child being visible to others.
 
 | Date | Reviewer | Outcome |
 |---|---|---|

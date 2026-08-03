@@ -150,8 +150,6 @@ def create_child(
     scopes = ["account"]
     if body.get("allow_ai_processing", True):
         scopes.append("ai_processing")
-    if body.get("allow_social", False):
-        scopes.append("social")
     consents = (
         consent.request_consent(db, child, parent, scopes)
         if bracket == ages.UNDER_13

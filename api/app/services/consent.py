@@ -19,7 +19,9 @@ from sqlalchemy.orm import Session
 
 from app.models.core import ConsentAudit, ParentalConsent, User
 
-SCOPES = ("account", "ai_processing", "social")
+# No `social` scope: under-13 accounts have no social surface at all, so
+# there is nothing for a parent to consent to. See services/friendships.py.
+SCOPES = ("account", "ai_processing")
 # Without this scope the child account cannot be used at all.
 REQUIRED_SCOPE = "account"
 

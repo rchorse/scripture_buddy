@@ -63,7 +63,7 @@ Sent ~24 hours after consent is recorded.
 |---|---|
 | `account` | create and use a ScriptureBuddy account |
 | `ai_processing` | have AI help check their answers and generate practice questions |
-| `social` | see and be seen by approved friends on leaderboards |
+
 
 ## Review checklist before launch
 
