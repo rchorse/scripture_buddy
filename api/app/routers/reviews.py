@@ -9,6 +9,8 @@ from app.core.principal import get_current_user
 from app.models.content import Exercise, Lesson, Release, ReleaseItem
 from app.models.core import User
 from app.services import cards as card_service
+from app.services import leveling
+from app.services.gamification import award_xp
 from app.services.grading import GradingError, grade, presentation_for, rating_for
 
 router = APIRouter(tags=["learning"])
@@ -55,6 +57,19 @@ def answer_exercise(
 
     card = card_service.get_or_create(db, user.id, exercise.id)
     card_service.record_review(db, card, rating_for(result["correct"]))
+
+    rewards = award_xp(
+        db,
+        user,
+        amount=(
+            leveling.XP_CORRECT_ANSWER
+            if result["correct"]
+            else leveling.XP_INCORRECT_ANSWER
+        ),
+        source="review" if body.get("from_review") else "lesson",
+        source_id=exercise.id,
+        correct=result["correct"],
+    )
     db.commit()
 
     return {
@@ -62,6 +77,7 @@ def answer_exercise(
         "due_at": card.due_at.isoformat(),
         "reps": card.reps,
         "lapses": card.lapses,
+        "rewards": rewards.as_dict(),
     }
 
 

@@ -57,7 +57,11 @@
       "Bash(sort -u -t' ' -k3 -n)",
       "Bash(curl -s -b /tmp/claude-1000/-home-nathans-ScriptureBuddy/64020999-347b-4886-982c-cd179379f4dc/scratchpad/c.txt https://833658p105.execute-api.us-west-2.amazonaws.com/prod/admin)",
       "Bash(PYTHONPATH=\"../.venv-deps:.\" python3 regenerate_gaps.py --source ../sources/book-of-mormon.json --work book-of-mormon --target 4 --dry-run)",
-      "Bash(PYTHONPATH=../.venv-deps:. python3 regenerate_gaps.py --source ../sources/book-of-mormon.json --work book-of-mormon --target 4 --out /tmp/claude-1000/-home-nathans-ScriptureBuddy/64020999-347b-4886-982c-cd179379f4dc/scratchpad/refill.jsonl)"
+      "Bash(PYTHONPATH=../.venv-deps:. python3 regenerate_gaps.py --source ../sources/book-of-mormon.json --work book-of-mormon --target 4 --out /tmp/claude-1000/-home-nathans-ScriptureBuddy/64020999-347b-4886-982c-cd179379f4dc/scratchpad/refill.jsonl)",
+      "Bash(PYTHONPATH=\".venv-deps:.\" python3 -m pytest tests/test_streaks.py -q)",
+      "Bash(PYTHONPATH=\".venv-deps:.\" python3 -m pytest tests/test_leveling_badges.py -q)",
+      "Bash(curl -s -H 'Authorization: Bearer __CMDSUB_OUTPUT__' https://833658p105.execute-api.us-west-2.amazonaws.com/prod/v1/game/me)",
+      "Bash(curl -s -H 'Authorization: Bearer __TRACKED_VAR__' https://833658p105.execute-api.us-west-2.amazonaws.com/prod/v1/game/me)"
     ]
   }
 }

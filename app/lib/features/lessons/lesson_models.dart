@@ -54,24 +54,85 @@ class ExerciseView {
       );
 }
 
+class EarnedBadge {
+  const EarnedBadge({required this.slug, required this.title, required this.description});
+
+  final String slug;
+  final String title;
+  final String description;
+
+  factory EarnedBadge.fromJson(Map<String, dynamic> json) => EarnedBadge(
+        slug: json['slug'] as String,
+        title: json['title'] as String,
+        description: json['description'] as String? ?? '',
+      );
+}
+
+class Rewards {
+  const Rewards({
+    required this.xpAwarded,
+    required this.totalXp,
+    required this.level,
+    required this.leveledUp,
+    required this.streak,
+    required this.streakExtended,
+    required this.newBadges,
+  });
+
+  final int xpAwarded;
+  final int totalXp;
+  final int level;
+  final bool leveledUp;
+  final int streak;
+  final bool streakExtended;
+  final List<EarnedBadge> newBadges;
+
+  static const empty = Rewards(
+    xpAwarded: 0,
+    totalXp: 0,
+    level: 1,
+    leveledUp: false,
+    streak: 0,
+    streakExtended: false,
+    newBadges: [],
+  );
+
+  factory Rewards.fromJson(Map<String, dynamic> json) => Rewards(
+        xpAwarded: json['xp_awarded'] as int? ?? 0,
+        totalXp: json['total_xp'] as int? ?? 0,
+        level: json['level'] as int? ?? 1,
+        leveledUp: json['leveled_up'] as bool? ?? false,
+        streak: json['streak'] as int? ?? 0,
+        streakExtended: json['streak_extended'] as bool? ?? false,
+        newBadges: ((json['new_badges'] as List?) ?? [])
+            .map((b) => EarnedBadge.fromJson(b as Map<String, dynamic>))
+            .toList(),
+      );
+}
+
 class AnswerResult {
   const AnswerResult({
     required this.correct,
     required this.correctAnswer,
     required this.explanation,
     required this.dueAt,
+    this.rewards = Rewards.empty,
   });
 
   final bool correct;
   final String correctAnswer;
   final String explanation;
   final DateTime dueAt;
+  final Rewards rewards;
 
   factory AnswerResult.fromJson(Map<String, dynamic> json) => AnswerResult(
         correct: json['correct'] as bool,
         correctAnswer: json['correct_answer'] as String,
         explanation: json['explanation'] as String? ?? '',
         dueAt: DateTime.parse(json['due_at'] as String),
+        rewards: json['rewards'] == null
+            ? Rewards.empty
+            : Rewards.fromJson(json['rewards'] as Map<String, dynamic>),
       );
 
   /// Human-readable "you'll see this again in …" text.

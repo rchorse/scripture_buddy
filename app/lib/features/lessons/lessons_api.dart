@@ -5,6 +5,7 @@ import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:http/http.dart' as http;
 
 import '../../core/config.dart';
+import '../game/game_models.dart';
 import 'lesson_models.dart';
 
 class LessonsApi {
@@ -54,6 +55,11 @@ class LessonsApi {
       {'answer': choice},
     ) as Map<String, dynamic>;
     return AnswerResult.fromJson(body);
+  }
+
+  Future<GameProgress> progress() async {
+    final body = await _send('GET', '/v1/game/me') as Map<String, dynamic>;
+    return GameProgress.fromJson(body);
   }
 
   Future<void> flag(String exerciseId, String reason, String note) async {

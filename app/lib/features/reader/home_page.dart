@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../game/game_models.dart';
+import '../game/progress_header.dart';
 import '../lessons/lesson_player_page.dart';
 import '../lessons/lessons_api.dart';
 import 'library_api.dart';
@@ -16,12 +18,15 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final _api = LibraryApi();
+  final _lessons = LessonsApi();
   late Future<List<WorkSummary>> _works;
+  late Future<GameProgress> _progress;
 
   @override
   void initState() {
     super.initState();
     _works = _api.listWorks();
+    _progress = _lessons.progress();
   }
 
   @override
@@ -44,6 +49,8 @@ class _HomePageState extends State<HomePage> {
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
+              ProgressHeader(future: _progress),
+              const SizedBox(height: 8),
               Card(
                 color: Theme.of(context).colorScheme.primaryContainer,
                 child: ListTile(
@@ -51,14 +58,17 @@ class _HomePageState extends State<HomePage> {
                   title: const Text('Daily review'),
                   subtitle: const Text('Verses due for practice'),
                   trailing: const Icon(Icons.chevron_right),
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => LessonPlayerPage(
-                        title: 'Daily review',
-                        load: () => LessonsApi().dueReviews(),
+                  onTap: () async {
+                    await Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => LessonPlayerPage(
+                          title: 'Daily review',
+                          load: () => _lessons.dueReviews(),
+                        ),
                       ),
-                    ),
-                  ),
+                    );
+                    setState(() => _progress = _lessons.progress());
+                  },
                 ),
               ),
               const SizedBox(height: 8),
@@ -67,12 +77,15 @@ class _HomePageState extends State<HomePage> {
                   child: ListTile(
                     leading: const Icon(Icons.menu_book),
                     title: Text(work.title),
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) =>
-                            TocPage(workSlug: work.slug, workTitle: work.title),
-                      ),
-                    ),
+                    onTap: () async {
+                      await Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              TocPage(workSlug: work.slug, workTitle: work.title),
+                        ),
+                      );
+                      setState(() => _progress = _lessons.progress());
+                    },
                   ),
                 ),
             ],

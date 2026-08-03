@@ -26,6 +26,9 @@ class _LessonPlayerPageState extends State<LessonPlayerPage> {
   List<ExerciseView> _items = const [];
   int _index = 0;
   int _correct = 0;
+  int _xpEarned = 0;
+  Rewards? _latestRewards;
+  final List<EarnedBadge> _badgesEarned = [];
   String? _selected;
   AnswerResult? _result;
   bool _submitting = false;
@@ -47,6 +50,9 @@ class _LessonPlayerPageState extends State<LessonPlayerPage> {
       setState(() {
         _result = result;
         if (result.correct) _correct++;
+        _xpEarned += result.rewards.xpAwarded;
+        _latestRewards = result.rewards;
+        _badgesEarned.addAll(result.rewards.newBadges);
       });
     } catch (e) {
       setState(() => _selected = null);
@@ -104,7 +110,13 @@ class _LessonPlayerPageState extends State<LessonPlayerPage> {
             return const _EmptyState();
           }
           if (_index >= _items.length) {
-            return _Results(correct: _correct, total: _items.length);
+            return _Results(
+              correct: _correct,
+              total: _items.length,
+              xpEarned: _xpEarned,
+              rewards: _latestRewards,
+              badges: _badgesEarned,
+            );
           }
           return _Question(
             exercise: _items[_index],
@@ -216,10 +228,29 @@ class _Question extends StatelessWidget {
                     Text(result!.explanation),
                   ],
                   const SizedBox(height: 8),
-                  Text(
-                    result!.nextReviewLabel,
-                    style: theme.textTheme.bodySmall
-                        ?.copyWith(color: theme.hintColor),
+                  Row(
+                    children: [
+                      Text(
+                        result!.nextReviewLabel,
+                        style: theme.textTheme.bodySmall
+                            ?.copyWith(color: theme.hintColor),
+                      ),
+                      const Spacer(),
+                      if (result!.rewards.xpAwarded > 0)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF2E7D32),
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: Text(
+                            '+${result!.rewards.xpAwarded} XP',
+                            style: theme.textTheme.labelMedium
+                                ?.copyWith(color: Colors.white),
+                          ),
+                        ),
+                    ],
                   ),
                 ],
               ),
@@ -237,43 +268,116 @@ class _Question extends StatelessWidget {
 }
 
 class _Results extends StatelessWidget {
-  const _Results({required this.correct, required this.total});
+  const _Results({
+    required this.correct,
+    required this.total,
+    required this.xpEarned,
+    required this.rewards,
+    required this.badges,
+  });
 
   final int correct;
   final int total;
+  final int xpEarned;
+  final Rewards? rewards;
+  final List<EarnedBadge> badges;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final pct = total == 0 ? 0 : (correct * 100 / total).round();
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
+    return ListView(
+      padding: const EdgeInsets.all(24),
+      children: [
+        const SizedBox(height: 24),
+        Icon(
+          pct >= 80 ? Icons.emoji_events : Icons.school,
+          size: 72,
+          color: theme.colorScheme.primary,
+        ),
+        const SizedBox(height: 16),
+        Text(
+          '$correct of $total correct',
+          textAlign: TextAlign.center,
+          style: theme.textTheme.headlineSmall,
+        ),
+        const SizedBox(height: 8),
+        Text(
+          pct >= 80
+              ? 'Well done — these verses are sticking.'
+              : 'Good effort. The ones you missed will come back sooner.',
+          textAlign: TextAlign.center,
+          style: theme.textTheme.bodyMedium,
+        ),
+        const SizedBox(height: 24),
+        Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              pct >= 80 ? Icons.emoji_events : Icons.school,
-              size: 72,
-              color: theme.colorScheme.primary,
-            ),
-            const SizedBox(height: 16),
-            Text('$correct of $total correct', style: theme.textTheme.headlineSmall),
-            const SizedBox(height: 8),
-            Text(
-              pct >= 80
-                  ? 'Well done — these verses are sticking.'
-                  : 'Good effort. The ones you missed will come back sooner.',
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodyMedium,
-            ),
-            const SizedBox(height: 24),
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Done'),
-            ),
+            _Stat(icon: Icons.bolt, label: '+$xpEarned XP'),
+            if (rewards != null && rewards!.streak > 0) ...[
+              const SizedBox(width: 12),
+              _Stat(
+                icon: Icons.local_fire_department,
+                label: '${rewards!.streak} day'
+                    '${rewards!.streak == 1 ? '' : 's'}',
+              ),
+            ],
           ],
         ),
+        if (rewards?.leveledUp ?? false) ...[
+          const SizedBox(height: 20),
+          Card(
+            color: const Color(0xFFFFF3CD),
+            child: ListTile(
+              leading: const Icon(Icons.arrow_circle_up, color: Color(0xFF8A6D00)),
+              title: Text('Level ${rewards!.level}!'),
+              subtitle: const Text('You reached a new level.'),
+            ),
+          ),
+        ],
+        for (final badge in badges) ...[
+          const SizedBox(height: 12),
+          Card(
+            color: const Color(0xFFE8F5E9),
+            child: ListTile(
+              leading: const Icon(Icons.military_tech, color: Color(0xFF2E7D32)),
+              title: Text('Badge earned: ${badge.title}'),
+              subtitle: Text(badge.description),
+            ),
+          ),
+        ],
+        const SizedBox(height: 28),
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Done'),
+        ),
+      ],
+    );
+  }
+}
+
+class _Stat extends StatelessWidget {
+  const _Stat({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primaryContainer,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 20, color: theme.colorScheme.primary),
+          const SizedBox(width: 6),
+          Text(label, style: theme.textTheme.titleSmall),
+        ],
       ),
     );
   }

@@ -7,7 +7,7 @@ from mangum import Mangum
 
 from app.admin.routes import router as admin_router
 from app.core.db import ensure_engine, init_engine
-from app.routers import lessons, library, me, reviews
+from app.routers import game, lessons, library, me, reviews
 
 
 @asynccontextmanager
@@ -30,6 +30,7 @@ app.include_router(me.router, prefix="/v1")
 app.include_router(library.router, prefix="/v1")
 app.include_router(lessons.router, prefix="/v1")
 app.include_router(reviews.router, prefix="/v1")
+app.include_router(game.router, prefix="/v1")
 app.include_router(admin_router)
 
 
@@ -52,6 +53,9 @@ def handler(event, context):
     if task == "ingest":
         from app.jobs.ingest import ingest_scriptures
         return ingest_scriptures(event["work_slug"], event["s3_key"])
+    if task == "streak_rollover":
+        from app.jobs.streak_rollover import streak_rollover
+        return streak_rollover()
     if task == "content_gaps":
         from app.jobs.content_gaps import content_gaps
         return content_gaps(event["work_slug"], event.get("target", 4))

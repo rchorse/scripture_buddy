@@ -4,6 +4,7 @@ from sqlalchemy import create_engine
 # added so autogenerate sees the full picture.
 import app.models.content
 import app.models.core
+import app.models.game
 import app.models.srs  # noqa: F401
 from alembic import context
 from app.core.db import build_engine_config
