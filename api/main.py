@@ -7,7 +7,16 @@ from mangum import Mangum
 
 from app.admin.routes import router as admin_router
 from app.core.db import ensure_engine, init_engine
-from app.routers import consent_public, family, game, lessons, library, me, reviews
+from app.routers import (
+    consent_public,
+    family,
+    game,
+    lessons,
+    library,
+    me,
+    reviews,
+    social,
+)
 
 
 @asynccontextmanager
@@ -33,6 +42,7 @@ app.include_router(reviews.router, prefix="/v1")
 app.include_router(game.router, prefix="/v1")
 app.include_router(family.router, prefix="/v1")
 app.include_router(consent_public.router, prefix="/v1")
+app.include_router(social.router, prefix="/v1")
 app.include_router(admin_router)
 
 

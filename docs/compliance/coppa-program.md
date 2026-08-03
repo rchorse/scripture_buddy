@@ -78,29 +78,27 @@ or make it publicly available. ScriptureBuddy:
 **This determination must be confirmed by counsel**, with particular attention
 to the item below.
 
-> ⚠️ **Open item — under-13 visibility to other learners.**
-> Under-13 accounts *can* have friends and appear on leaderboards, when the
-> parent grants the `social` scope. That makes a child's **display name**
-> visible to other users, which is the one respect in which information about a
-> child reaches people outside the operator.
+> **Under-13 visibility to other learners — decided 2026-08-03.**
+> Under-13 accounts may have friends and appear on leaderboards when the parent
+> grants the `social` scope. This makes a child's **display name** visible to
+> other users.
 >
-> Mitigations already in place: friends require mutual agreement *and* the
-> child's parent's approval of that specific person; the `social` scope is a
-> separate, revocable, up-front parental decision; no chat exists, so visibility
-> never becomes contact; and no contact information, real name, photo, or
-> location is ever collected or shown.
+> **Decision: display names are free text at every age, with screening.**
+> Because a child (or parent) could type personal information into a free-text
+> name, the screening for under-13 accounts checks for *personal information*
+> as well as offensive content — real names, locations, schools, contact
+> handles, ages — and is **fail-closed**: a name that cannot be cleared is not
+> shown to anyone until the owner reviews it. See
+> `api/app/services/name_moderation.py`.
 >
-> **The unresolved question** is whether a *custom* display name is appropriate
-> for an under-13 account, since a parent or child could type a real name into
-> it. Options, cheapest first:
->   1. Under-13 display names are **chosen from generated options** rather than
->      free text (e.g. "BraveVoyager42"). Nothing personal is disclosed, and the
->      lighter consent method is comfortably justified.
->   2. Keep free-text names but screen them for personal information as well as
->      for offensive content.
->   3. Require a stricter consent method for the `social` scope specifically.
+> Other mitigations: friends require mutual agreement *and* the child's parent
+> approving that specific person; the `social` scope is separately revocable;
+> there is no chat, so visibility never becomes contact; and no contact
+> information, real name, photo, or location is ever collected as a field.
 >
-> Option 1 is recommended and is a small change. **Decide before launch.**
+> **Still to confirm with counsel:** that screened free-text display names are
+> an acceptable basis for the email-plus method, given a child's chosen name is
+> visible to unrelated learners in a league cohort.
 
 ### Per-scope consent
 

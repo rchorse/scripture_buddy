@@ -28,7 +28,26 @@ from infra.auth_stack import AuthStack
 # Absolute path to the api/ directory (one level up from infra/)
 _API_DIR = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", "api"))
 
-_BUNDLE_EXCLUDE = {".venv", "__pycache__", "dev.db", ".gitkeep", "tests"}
+_BUNDLE_EXCLUDE = {".venv", ".venv-deps", "__pycache__", "dev.db", ".gitkeep", "tests"}
+
+# Trimmed from the installed dependencies to stay under Lambda's 250MB
+# unzipped limit. boto3/botocore are supplied by the Python runtime, and `bin`
+# holds console scripts that never execute in Lambda.
+_PRUNE_FROM_BUNDLE = ("boto3", "botocore", "bin", "pip", "setuptools", "wheel")
+
+
+def _prune(output_dir: str) -> None:
+    """Drop what Lambda already provides or never runs there."""
+    for name in _PRUNE_FROM_BUNDLE:
+        target = os.path.join(output_dir, name)
+        if os.path.isdir(target):
+            shutil.rmtree(target, ignore_errors=True)
+    # Distribution metadata for pruned packages, plus stray caches.
+    for entry in os.listdir(output_dir):
+        if entry.endswith((".dist-info", ".egg-info")) and entry.split("-")[0] in (
+            _PRUNE_FROM_BUNDLE
+        ):
+            shutil.rmtree(os.path.join(output_dir, entry), ignore_errors=True)
 
 
 @jsii.implements(ILocalBundling)
@@ -49,6 +68,7 @@ class _LocalPipBundler:
                 ],
                 check=True,
             )
+            _prune(output_dir)
             for item in os.listdir(_API_DIR):
                 if item in _BUNDLE_EXCLUDE:
                     continue
@@ -128,7 +148,8 @@ class ApiStack(Stack):
                         "bash", "-c",
                         "pip install -r requirements.txt -t /asset-output --quiet"
                         " && cp -rT . /asset-output"
-                        f" && cd /asset-output && rm -rf {' '.join(_BUNDLE_EXCLUDE)}",
+                        f" && cd /asset-output && rm -rf {' '.join(_BUNDLE_EXCLUDE)}"
+                        f" {' '.join(_PRUNE_FROM_BUNDLE)}",
                     ],
                     local=_LocalPipBundler(),
                 ),
@@ -183,6 +204,19 @@ class ApiStack(Stack):
                     "cognito-idp:ListUsers",
                 ],
                 resources=[auth.user_pool.user_pool_arn],
+            )
+        )
+
+        # Display-name screening calls Haiku with this key. Created out of band
+        # (see docs); referenced by name so a missing secret is a runtime
+        # fail-closed rather than a deploy failure.
+        self.api_function.add_to_role_policy(
+            iam.PolicyStatement(
+                actions=["secretsmanager:GetSecretValue"],
+                resources=[
+                    f"arn:aws:secretsmanager:{self.region}:{self.account}:"
+                    "secret:scripturebuddy/anthropic-api-key-*"
+                ],
             )
         )
 

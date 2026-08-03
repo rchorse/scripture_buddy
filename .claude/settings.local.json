@@ -69,7 +69,9 @@
       "Bash(cat /tmp/consent_link.txt)",
       "Bash(PYTHONPATH=\".venv-deps:.\" python3 -m pytest tests/test_friendship_rules.py -q)",
       "Bash(sed -i 's/| Refuse further collection | Revoke `ai_processing` \\\\/ `social` | That use stops; account still works |/| Refuse further collection | Revoke `ai_processing` | That use stops; account still works |/' docs/compliance/coppa-program.md)",
-      "Bash(sed -i 's/| `social` | see and be seen by approved friends on leaderboards |//' docs/compliance/consent-notice.md)"
+      "Bash(sed -i 's/| `social` | see and be seen by approved friends on leaderboards |//' docs/compliance/consent-notice.md)",
+      "Bash(PYTHONPATH=\".venv-deps:.\" python3 -m pytest tests/test_name_moderation.py -q)",
+      "Bash(aws logs *)"
     ]
   }
 }
