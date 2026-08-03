@@ -61,7 +61,12 @@
       "Bash(PYTHONPATH=\".venv-deps:.\" python3 -m pytest tests/test_streaks.py -q)",
       "Bash(PYTHONPATH=\".venv-deps:.\" python3 -m pytest tests/test_leveling_badges.py -q)",
       "Bash(curl -s -H 'Authorization: Bearer __CMDSUB_OUTPUT__' https://833658p105.execute-api.us-west-2.amazonaws.com/prod/v1/game/me)",
-      "Bash(curl -s -H 'Authorization: Bearer __TRACKED_VAR__' https://833658p105.execute-api.us-west-2.amazonaws.com/prod/v1/game/me)"
+      "Bash(curl -s -H 'Authorization: Bearer __TRACKED_VAR__' https://833658p105.execute-api.us-west-2.amazonaws.com/prod/v1/game/me)",
+      "Bash(PYTHONPATH=\".venv-deps:.\" python3 -m pytest tests/test_ages.py -q)",
+      "Bash(pg_isready)",
+      "Bash(systemctl is-active *)",
+      "Bash(python3 -c \"import json; d=json.load\\(open\\('/tmp/child2.json'\\)\\); print\\([c['id'] for c in d['pending_consents'] if c['scope']=='account'][0]\\)\")",
+      "Bash(cat /tmp/consent_link.txt)"
     ]
   }
 }

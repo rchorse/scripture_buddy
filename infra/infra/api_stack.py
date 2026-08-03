@@ -12,6 +12,7 @@ from aws_cdk import (
     aws_apigateway as apigw,
     aws_certificatemanager as acm,
     aws_ec2 as ec2,
+    aws_iam as iam,
     aws_events as events,
     aws_events_targets as targets,
     aws_s3 as s3,
@@ -89,6 +90,10 @@ class ApiStack(Stack):
             self, "SharedLambdaSg", self.node.try_get_context("shared_lambda_sg_id")
         )
         db_host = self.node.try_get_context("shared_db_host")
+        consent_sender = self.node.try_get_context("consent_email_sender") or ""
+        public_api_url = (
+            f"https://{custom_domain}" if custom_domain else self.node.try_get_context("public_api_url") or ""
+        )
         admin_secret_arn = self.node.try_get_context("shared_admin_secret_arn")
 
         # Staging bucket for content-pipeline payloads too large for a direct
@@ -146,10 +151,17 @@ class ApiStack(Stack):
                 "DATA_BUCKET": self.data_bucket.bucket_name,
                 # Admin UI URL prefix: API GW stage until a custom domain exists.
                 "URL_PREFIX": "/prod",
+                # Public base for parent-facing consent links.
+                "PUBLIC_API_URL": public_api_url,
+                # Verified SES sender for consent email; blank disables sending.
+                "CONSENT_EMAIL_SENDER": consent_sender,
             },
         )
 
-        self.data_bucket.grant_read(self.api_function)
+        # Read for content payloads; write/delete for consent evidence, which
+        # parents upload via presigned PUT and the retention sweep erases.
+        self.data_bucket.grant_read_write(self.api_function)
+        self.data_bucket.grant_delete(self.api_function)
         self.db_secret.grant_read(self.api_function)
         self.db_secret.grant_write(self.api_function)  # bootstrap writes sb_app creds
 
@@ -158,6 +170,29 @@ class ApiStack(Stack):
                 self, "SharedAdminSecret", admin_secret_arn
             )
             admin_secret.grant_read(self.api_function)  # bootstrap only
+
+        # Parents create child sign-ins (username-only, no email) and the
+        # retention sweep deletes them. Scoped to this pool only.
+        self.api_function.add_to_role_policy(
+            iam.PolicyStatement(
+                actions=[
+                    "cognito-idp:AdminCreateUser",
+                    "cognito-idp:AdminSetUserPassword",
+                    "cognito-idp:AdminDeleteUser",
+                    "cognito-idp:AdminGetUser",
+                    "cognito-idp:ListUsers",
+                ],
+                resources=[auth.user_pool.user_pool_arn],
+            )
+        )
+
+        # Consent email to parents (email-plus verifiable consent).
+        self.api_function.add_to_role_policy(
+            iam.PolicyStatement(
+                actions=["ses:SendEmail", "ses:SendRawEmail"],
+                resources=["*"],
+            )
+        )
 
         # Keep one execution environment warm (cheaper than provisioned concurrency).
         warm_rule = events.Rule(

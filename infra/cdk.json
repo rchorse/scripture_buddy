@@ -4,6 +4,8 @@
     "shared_vpc_name": "blahblahbudget-vpc",
     "shared_lambda_sg_id": "sg-03ea62f4166cb8135",
     "shared_db_host": "blahblahbudget-db.cluster-c5iu02gy8a6b.us-west-2.rds.amazonaws.com",
+    "public_api_url": "https://833658p105.execute-api.us-west-2.amazonaws.com/prod",
+    "consent_email_sender": "",
     "shared_admin_secret_arn": "arn:aws:secretsmanager:us-west-2:452379802132:secret:blahblahbudget/db-credentials-Hj5XuL",
     "@aws-cdk/aws-lambda:recognizeLayerVersion": true,
     "@aws-cdk/core:checkSecretUsage": true,

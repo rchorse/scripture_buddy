@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Parental consent <small>({{ total }} awaiting verification)</small></h2>
+<p style="color:#555">
+  COPPA requires <em>verifiable</em> parental consent before an under-13 account
+  can be used. Open the signed form, check it against the parent's details, then
+  approve or deny. Approving activates the child's account.
+</p>
+{% for row in rows %}
+<div class="card" id="consent-{{ row.id }}">
+  <p>
+    <strong>{{ row.child_username }}</strong>
+    (born {{ row.child_birth_date }}, {{ row.child_age }} years old)
+    · scope <strong>{{ row.scope }}</strong>
+    · <span class="pill {{ 'ai_draft' if row.status == 'pending' else row.status }}">{{ row.status }}</span>
+  </p>
+  <p style="color:#555;font-size:.9rem">
+    Requested by {{ row.parent_username }} on {{ row.requested_at }} · method {{ row.method }}
+  </p>
+  {% if row.evidence_url %}
+    <p><a class="btn" href="{{ row.evidence_url }}" target="_blank" rel="noopener">Open signed form</a>
+    <span style="color:#777;font-size:.85rem">link expires in 10 minutes</span></p>
+  {% else %}
+    <p style="color:#b3261e">No signed form uploaded yet — cannot be approved.</p>
+  {% endif %}
+  <form hx-post="{{ base }}/admin/consents/{{ row.id }}/verify"
+        hx-target="#consent-{{ row.id }}" hx-swap="outerHTML">
+    <input name="note" placeholder="Note (optional)" style="padding:.4rem;width:45%">
+    <button name="decision" value="approve" {% if not row.evidence_url %}disabled{% endif %}>Approve</button>
+    <button name="decision" value="deny" class="danger">Deny</button>
+  </form>
+</div>
+{% else %}
+<div class="card"><p>Nothing awaiting consent verification 🎉</p></div>
+{% endfor %}
+{% endblock %}

@@ -1,6 +1,8 @@
 import json
 import os
+from datetime import UTC, datetime
 
+import boto3
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
@@ -10,6 +12,9 @@ from sqlalchemy.orm import Session
 from app.admin.auth import COOKIE_NAME, cognito_login, require_owner
 from app.core.db import get_db
 from app.models.content import Exercise, ExerciseFlag, Lesson, Release, ReleaseItem, Work
+from app.models.core import ParentalConsent, User
+from app.services import ages
+from app.services import consent as consent_service
 from app.services.releases import cut_release
 
 router = APIRouter(prefix="/admin", include_in_schema=False)
@@ -250,6 +255,94 @@ def review_queue(
     ]
     return templates.TemplateResponse(
         request, "review.html", {"exercises": exercises, "total": total or 0}
+    )
+
+
+@router.get("/consents", response_class=HTMLResponse)
+def consents_queue(
+    request: Request,
+    claims: dict = Depends(require_owner),
+    db: Session = Depends(get_db),
+):
+    pending = db.scalars(
+        select(ParentalConsent)
+        .where(ParentalConsent.status == "pending")
+        .order_by(ParentalConsent.requested_at)
+        .limit(50)
+    ).all()
+
+    s3 = boto3.client("s3", region_name=os.environ.get("AWS_REGION", "us-west-2"))
+    bucket = os.environ.get("DATA_BUCKET")
+    today = datetime.now(UTC).date()
+
+    rows = []
+    for consent_row in pending:
+        child = db.get(User, consent_row.child_user_id)
+        parent = db.get(User, consent_row.parent_user_id)
+        evidence_url = None
+        if consent_row.evidence_s3_key and bucket:
+            # Short-lived read link; the bucket itself stays private.
+            evidence_url = s3.generate_presigned_url(
+                "get_object",
+                Params={"Bucket": bucket, "Key": consent_row.evidence_s3_key},
+                ExpiresIn=600,
+            )
+        rows.append(
+            {
+                "id": str(consent_row.id),
+                "scope": consent_row.scope,
+                "status": consent_row.status,
+                "method": consent_row.method,
+                "requested_at": consent_row.requested_at.strftime("%Y-%m-%d %H:%M"),
+                "child_username": child.username if child else "?",
+                "child_birth_date": child.birth_date.isoformat()
+                if child and child.birth_date
+                else "unknown",
+                "child_age": ages.age_on(child.birth_date, today)
+                if child and child.birth_date
+                else "?",
+                "parent_username": parent.username if parent else "?",
+                "evidence_url": evidence_url,
+            }
+        )
+    return templates.TemplateResponse(
+        request, "consents.html", {"rows": rows, "total": len(rows)}
+    )
+
+
+@router.post("/consents/{consent_id}/verify", response_class=HTMLResponse)
+def verify_consent_route(
+    consent_id: str,
+    request: Request,
+    decision: str = Form(...),
+    note: str = Form(""),
+    claims: dict = Depends(require_owner),
+    db: Session = Depends(get_db),
+):
+    row = db.get(ParentalConsent, consent_id)
+    if row is None:
+        raise HTTPException(status_code=404)
+    owner = db.scalar(select(User).where(User.cognito_sub == claims["sub"]))
+    if owner is None:
+        raise HTTPException(status_code=403, detail="Owner account not provisioned")
+
+    try:
+        consent_service.verify_consent(
+            db, row, owner, approve=(decision == "approve"), note=note
+        )
+    except consent_service.ConsentError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    child = db.get(User, row.child_user_id)
+    db.commit()
+
+    return templates.TemplateResponse(
+        request,
+        "_consent_done.html",
+        {
+            "child_username": child.username if child else "?",
+            "scope": row.scope,
+            "status": row.status,
+        },
     )
 
 

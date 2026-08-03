@@ -7,7 +7,7 @@ from mangum import Mangum
 
 from app.admin.routes import router as admin_router
 from app.core.db import ensure_engine, init_engine
-from app.routers import game, lessons, library, me, reviews
+from app.routers import consent_public, family, game, lessons, library, me, reviews
 
 
 @asynccontextmanager
@@ -31,6 +31,8 @@ app.include_router(library.router, prefix="/v1")
 app.include_router(lessons.router, prefix="/v1")
 app.include_router(reviews.router, prefix="/v1")
 app.include_router(game.router, prefix="/v1")
+app.include_router(family.router, prefix="/v1")
+app.include_router(consent_public.router, prefix="/v1")
 app.include_router(admin_router)
 
 
@@ -53,6 +55,24 @@ def handler(event, context):
     if task == "ingest":
         from app.jobs.ingest import ingest_scriptures
         return ingest_scriptures(event["work_slug"], event["s3_key"])
+    if task == "retention_sweep":
+        from datetime import UTC, datetime
+
+        from app.jobs.retention_sweep import retention_sweep
+
+        # `as_of` lets an operator re-run a missed day, or verify the purge in a
+        # test environment. Requires AWS credentials to invoke; never reachable
+        # from the public API.
+        as_of = event.get("as_of")
+        return retention_sweep(
+            datetime.fromisoformat(as_of).replace(tzinfo=UTC) if as_of else None
+        )
+    if task == "resend_consent_notice":
+        from app.jobs.resend_consent import resend_consent_notice
+        return resend_consent_notice(event["consent_id"])
+    if task == "consent_followups":
+        from app.jobs.consent_followups import consent_followups
+        return consent_followups()
     if task == "streak_rollover":
         from app.jobs.streak_rollover import streak_rollover
         return streak_rollover()

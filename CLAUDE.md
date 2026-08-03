@@ -4,7 +4,8 @@ Approved plan: `~/.claude/plans/steady-dreaming-cray.md` (architecture, mileston
 
 ## Hard rules
 - **No chat/messaging features. Ever.** This was a final product decision; the only user-visible UGC is custom display names (Haiku-checked, fail-closed).
-- Under-13 users are supported → full COPPA (2026 rule). Child accounts are username-only: never store email/phone/real-name/geolocation for minors. Age bracket is computed server-side from birth_date, never trusted from the client.
+- Under-13 users are supported → full COPPA (2026 rule). Child accounts are username-only: never store email/phone/real-name/geolocation for minors — there are deliberately no columns for them. Age bracket is computed server-side from birth_date, never trusted from the client.
+- Verifiable parental consent uses **email-plus** (one-time link to the parent's email + delayed confirmation). Consent is **per-scope** (`account`/`ai_processing`/`social`) and independently revocable; `core.consent_audit` is append-only and survives account deletion. See `docs/compliance/coppa-program.md`.
 - No ads SDKs. Monetization goes through the `entitlements` table only.
 - Clients only see released content (`releases`/`release_items`), never raw `exercises` state. Retired exercises stay in the release snapshot but are excluded at serve time.
 - Generated exercises are **auto-approved by mechanical validation** against the source scripture (`api/app/services/exercise_validation.py`), not per-item human review. Anything that fails validation lands in `/admin/review` with the reason. Learner flags go to `/admin/flags` for **manual** owner decision — flags never retire an item automatically.
