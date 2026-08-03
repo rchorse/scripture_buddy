@@ -68,18 +68,39 @@ and confirm consent and for account recovery.
 
 **Why this method is appropriate.** The FTC permits a less rigorous method where
 the operator does not disclose children's personal information to third parties
-or make it publicly available. ScriptureBuddy does neither:
+or make it publicly available. ScriptureBuddy:
 
-- No chat or messaging of any kind.
-- **No social features for under-13 accounts, ever** — a child's display name,
-  progress, and existence are never visible to any other user. This is a fixed
-  product decision enforced in `app/services/friendships.py`, not a setting.
-- No advertising or analytics SDKs; nothing sold or shared.
-- AWS and Anthropic act strictly as service providers under contract.
+- Has **no chat or messaging** of any kind. A child cannot send or receive a
+  message, so no child can be contacted by anyone.
+- Shows no ads, uses no analytics SDKs, and sells or shares nothing.
+- Uses AWS and Anthropic strictly as service providers under contract.
 
-A child's personal information therefore never leaves the operator's control,
-which is precisely the condition the lighter method is designed for.
-**This determination should still be confirmed by counsel.**
+**This determination must be confirmed by counsel**, with particular attention
+to the item below.
+
+> ⚠️ **Open item — under-13 visibility to other learners.**
+> Under-13 accounts *can* have friends and appear on leaderboards, when the
+> parent grants the `social` scope. That makes a child's **display name**
+> visible to other users, which is the one respect in which information about a
+> child reaches people outside the operator.
+>
+> Mitigations already in place: friends require mutual agreement *and* the
+> child's parent's approval of that specific person; the `social` scope is a
+> separate, revocable, up-front parental decision; no chat exists, so visibility
+> never becomes contact; and no contact information, real name, photo, or
+> location is ever collected or shown.
+>
+> **The unresolved question** is whether a *custom* display name is appropriate
+> for an under-13 account, since a parent or child could type a real name into
+> it. Options, cheapest first:
+>   1. Under-13 display names are **chosen from generated options** rather than
+>      free text (e.g. "BraveVoyager42"). Nothing personal is disclosed, and the
+>      lighter consent method is comfortably justified.
+>   2. Keep free-text names but screen them for personal information as well as
+>      for offensive content.
+>   3. Require a stricter consent method for the `social` scope specifically.
+>
+> Option 1 is recommended and is a small change. **Decide before launch.**
 
 ### Per-scope consent
 
@@ -90,11 +111,11 @@ Consent is recorded **per scope** and is independently revocable:
 |---|---|
 | `account` | Creating and using the account. **Required** — without it the account is disabled. |
 | `ai_processing` | Sending answer text to Anthropic for grading assistance and content generation. |
+| `social` | Having friends and appearing on leaderboards. Off unless the parent opts in. |
 
-There is deliberately **no `social` scope**: under-13 accounts have no social
-surface, so there is nothing to consent to. Consent is never used as a condition
-of participation beyond what the service requires — a child may use the app with
-only `account` consent.
+Consent is never used as a condition of participation beyond what the service
+requires: a child may use the whole learning experience with only `account`
+consent. Declining `social` costs them friends and leaderboards, nothing else.
 
 ## 5. Parental rights
 
@@ -102,7 +123,7 @@ only `account` consent.
 |---|---|---|
 | Review what we hold | Family screen in the app | Shows the child's data |
 | Withdraw consent | Family screen → revoke | Account disabled **immediately** |
-| Refuse further collection | Revoke `ai_processing` | That use stops; account still works |
+| Refuse further collection | Revoke `ai_processing` or `social` | That use stops; account still works |
 | Delete the child's data | Family screen → delete | Disabled at once; irreversible purge after 30 days |
 
 Parental authority ends automatically at 18 (`require_parent_of` refuses once
@@ -162,11 +183,8 @@ recorded in `CLAUDE.md`.
 This program is reviewed:
 - Before public launch (with counsel).
 - At least annually thereafter.
-- Whenever a new category of data is collected or a new service provider is
-  added.
-- **If under-13 social features are ever contemplated** (currently ruled out),
-  the consent method must be re-assessed first — the justification for
-  email-plus rests partly on nothing about a child being visible to others.
+- Whenever a new category of data is collected, a new service provider is
+  added, or the visibility of a child's information to other users changes.
 
 | Date | Reviewer | Outcome |
 |---|---|---|

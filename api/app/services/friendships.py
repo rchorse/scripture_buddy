@@ -6,12 +6,12 @@ Rules, in the order they are enforced:
 2. Both learners must agree — a request is not a friendship.
 3. If either learner is a minor, THAT learner's parent must also approve. A
    teen's friend accepting is not a substitute for a parent's approval.
-4. Under-13 accounts have no social surface at all. Not gated, not
-   configurable — the product decision is that a child's information is never
-   visible to another user.
+4. An under-13 learner additionally needs the `social` consent scope. Their
+   parent decides whether they may have friends and appear on leaderboards at
+   all, separately from consenting to the account itself.
 
-Rule 4 is why there is no `social` consent scope: consent is only meaningful
-for something that can happen, and this cannot.
+(There is no chat anywhere in the app — "social" here means seeing an approved
+friend's progress and appearing on a leaderboard, nothing more.)
 """
 from datetime import UTC, datetime
 
@@ -20,7 +20,7 @@ from sqlalchemy.orm import Session
 
 from app.models.core import FamilyMember, User
 from app.models.social import Block, FriendRequest, Friendship, ParentApproval
-from app.services import ages
+from app.services import ages, consent
 
 
 class FriendshipError(ValueError):
@@ -87,14 +87,17 @@ def _parents_of(db: Session, child_id) -> list[User]:
 def assert_may_socialize(db: Session, user: User) -> None:
     """Whether this learner may take part in social features at all.
 
-    Under-13 accounts never can. This is a fixed product decision, not a
-    setting: no child's display name or progress is ever visible to another
-    user. Teens may, but each individual friendship still needs their parent's
-    approval.
+    Adults always may. Teens may, with each individual friendship still needing
+    their parent's approval. An under-13 learner needs their parent to have
+    granted the `social` scope — that is the parent's up-front decision about
+    whether their child is visible to other learners at all, and it is
+    revocable at any time.
     """
-    if _bracket(user) == ages.UNDER_13:
+    if _bracket(user) != ages.UNDER_13:
+        return
+    if not consent.has_consent(db, user.id, "social"):
         raise FriendshipError(
-            "Friends and leaderboards are not available for accounts under 13."
+            "A parent must consent to friends and leaderboards for this account."
         )
 
 

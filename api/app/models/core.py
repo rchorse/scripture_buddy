@@ -112,7 +112,7 @@ class ParentalConsent(Base):
     __table_args__ = (
         UniqueConstraint("child_user_id", "scope", name="uq_consent_child_scope"),
         CheckConstraint(
-            "scope IN ('account','ai_processing')", name="scope_valid"
+            "scope IN ('account','ai_processing','social')", name="scope_valid"
         ),
         CheckConstraint(
             "status IN ('pending','granted','revoked','denied')", name="status_valid"
