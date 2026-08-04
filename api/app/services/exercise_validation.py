@@ -32,7 +32,15 @@ def _verses_for_chapter(db: Session, division_id) -> dict[str, str]:
 
 def validate_exercise(db: Session, kind: str, payload: dict, division_id) -> list[str]:
     """Return a list of problems; empty means the exercise is trustworthy."""
-    verses = _verses_for_chapter(db, division_id)
+    return check_payload(kind, payload, _verses_for_chapter(db, division_id))
+
+
+def check_payload(kind: str, payload: dict, verses: dict[str, str]) -> list[str]:
+    """The validation rules themselves, over a plain ref_label -> text mapping.
+
+    Kept free of the database so the content pipeline can measure a generation
+    run's failure rate locally, against the source JSON, before importing.
+    """
     if not verses:
         return ["chapter has no verses"]
     chapter_text = normalize(" ".join(verses.values()))

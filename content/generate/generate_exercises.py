@@ -45,18 +45,30 @@ MODEL = "claude-opus-5"
 PROMPTS_DIR = Path(__file__).parent / "prompts"
 
 
-def chapter_requests(source: dict, book_filter: str | None, kinds: list[str], n: int):
+def chapter_requests(
+    source: dict,
+    book_filter: str | None,
+    kinds: list[str],
+    n: int,
+    chapters_filter: set[int] | None = None,
+    skip_books: set[str] = frozenset(),
+    prompts_dir: Path = PROMPTS_DIR,
+):
     work_title = source["title"]
     for book in source["books"]:
         if book_filter and book["book"] != book_filter:
             continue
+        if book["book"] in skip_books:
+            continue
         for chapter in book["chapters"]:
+            if chapters_filter and chapter["chapter"] not in chapters_filter:
+                continue
             chapter_ref = chapter.get("reference", f"{book['book']} {chapter['chapter']}")
             chapter_text = "\n".join(
                 f"{v['verse']}. {v['text']}" for v in chapter["verses"]
             )
             for kind in kinds:
-                prompt = (PROMPTS_DIR / f"{kind}.txt").read_text().format(
+                prompt = (prompts_dir / f"{kind}.txt").read_text().format(
                     chapter_ref=chapter_ref,
                     work_title=work_title,
                     chapter_text=chapter_text,
@@ -150,6 +162,17 @@ def main() -> None:
     parser.add_argument("--kinds", default="mcq,cloze")
     parser.add_argument("--per-chapter", type=int, default=4)
     parser.add_argument("--out", default="drafts.jsonl")
+    parser.add_argument(
+        "--chapters", default=None, help="Limit to these chapter numbers, e.g. '1,5,32'"
+    )
+    parser.add_argument(
+        "--skip-books",
+        default=None,
+        help="Comma-separated book titles to leave out, e.g. '1 Nephi' once it is done",
+    )
+    parser.add_argument(
+        "--dry-run", action="store_true", help="Print what would be submitted and stop"
+    )
     args = parser.parse_args()
 
     source = json.loads(Path(args.source).read_text())
@@ -158,8 +181,22 @@ def main() -> None:
         if kind not in PAYLOAD_SCHEMAS:
             sys.exit(f"Unknown kind: {kind}")
 
+    chapters_filter = (
+        {int(c) for c in args.chapters.split(",")} if args.chapters else None
+    )
+    skip_books = set(args.skip_books.split(",")) if args.skip_books else frozenset()
+    reqs = list(
+        chapter_requests(
+            source, args.book, kinds, args.per_chapter, chapters_filter, skip_books
+        )
+    )
+    if args.dry_run:
+        print(f"Would submit {len(reqs)} requests ({args.kinds}) via {MODEL}:")
+        for custom_id, _, chapter_ref, _ in reqs:
+            print(f"  {custom_id}  ({chapter_ref})")
+        return
+
     client = anthropic.Anthropic(api_key=api_key())
-    reqs = list(chapter_requests(source, args.book, kinds, args.per_chapter))
     print(f"Submitting batch: {len(reqs)} requests ({args.kinds}) via {MODEL}")
     batch_id, meta = build_batch(client, iter(reqs))
     print(f"Batch {batch_id} submitted; polling…")

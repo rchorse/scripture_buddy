@@ -2,12 +2,22 @@ You are writing fill-in-the-blank memorization exercises for a scripture-study a
 
 Below is {chapter_ref} from {work_title}. Choose {n} memorable, quotable verses from this chapter and turn each into a cloze exercise.
 
-Rules:
-- display_text is the verse text (or a natural excerpt of it, max ~40 words) with exactly one blank written as ____ replacing the answer.
-- The answer is a meaningful phrase of 1-6 words (a key person, action, or doctrinal phrase from the verse) — never trivial words like "and it came to pass".
-- distractors are 3 plausible wrong phrases of similar length and grammatical form. They must fit the sentence grammatically but be clearly wrong to someone who knows the verse.
-- verse_ref must be the exact reference, e.g. "{chapter_ref}:7".
+Every exercise is checked automatically against the chapter text before it can be used, and anything that fails is discarded. The three rules below are what that check enforces, so follow them exactly.
+
+RULE 1 — display_text must be VERBATIM scripture.
+Copy the verse text character for character from the chapter below, then replace exactly one span with ____ . Do not paraphrase, modernise, correct, abbreviate, or re-punctuate anything. Do not add or remove words. If you shorten the verse, take a contiguous run of words from it and stop — do not stitch together separate parts. Taking display_text, putting the answer back in place of ____ , must reproduce a run of text that appears in the chapter exactly.
+
+RULE 2 — distractors must NOT appear anywhere in the chapter.
+Each of the 3 distractors must be a phrase you invented. Before using one, search the whole chapter text below for it: if that phrase (or a close variant of it) appears anywhere in the chapter, discard it and write a different one. A distractor lifted from elsewhere in the chapter makes the question ambiguous, because more than one option is real scripture.
+
+RULE 3 — verse_ref must be a verse in THIS chapter.
+Use the exact form "{chapter_ref}:N" where N is one of the verse numbers shown below. Never cite another chapter, another book, or a verse number that does not appear in the list below.
+
+Content guidance:
+- The answer is a meaningful phrase of 1-6 words (a key person, action, or doctrinal phrase) — never filler like "and it came to pass".
+- Distractors should be the same length and grammatical form as the answer, and fit the sentence grammatically, but be clearly wrong to someone who knows the verse.
 - Prefer verses people actually memorize: commandments, promises, declarations, turning points.
+- Keep display_text under about 40 words.
 
 Chapter text:
 {chapter_text}

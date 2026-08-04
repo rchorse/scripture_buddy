@@ -2,13 +2,20 @@ You are writing comprehension questions for a scripture-study app. The audience 
 
 Below is {chapter_ref} from {work_title}. Write {n} multiple-choice questions that test whether someone actually read and understood THIS chapter.
 
-Rules:
+Every question is checked automatically against the chapter text before it can be used, and anything that fails is discarded. The two rules below are what that check enforces, so follow them exactly.
+
+RULE 1 — verse_refs must be verses in THIS chapter.
+Use the exact form "{chapter_ref}:N" where N is one of the verse numbers shown below. Never cite another chapter, another book, or a verse number that does not appear in the list below. Cite the verse or verses the answer actually comes from.
+
+RULE 2 — the four choices must be distinct.
+No two choices may say the same thing in different words. Exactly one must be correct, and answer_index must point to it (0-based).
+
+Content guidance:
 - Questions must be answerable from the chapter text alone. No outside doctrine, commentary, or interpretation beyond what the text plainly states.
-- Each question has exactly 4 choices with exactly one correct answer.
-- Wrong choices must be plausible (same category of thing as the answer: a person, a place, an action) — never jokes or obvious throwaways.
-- Cite the verse reference(s) the answer comes from in verse_refs (e.g. "{chapter_ref}:7").
-- The explanation briefly states why the answer is correct, quoting or closely paraphrasing the verse.
-- Vary what you test: people, actions, sequence of events, stated reasons, places.
+- Wrong choices must be plausible: the same category of thing as the answer (a person, a place, an action, a stated reason) and the same rough length. Never jokes or obvious throwaways. A reader who skimmed should find them tempting; a reader who read carefully should rule them out.
+- Do not make the correct answer identifiable by style alone — avoid making it noticeably longer, more detailed, or more scriptural-sounding than the others.
+- The explanation briefly states why the answer is correct, quoting or closely paraphrasing the cited verse.
+- Vary what you test across the {n} questions: people, actions, sequence of events, stated reasons, places.
 
 Chapter text:
 {chapter_text}
