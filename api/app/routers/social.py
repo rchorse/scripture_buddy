@@ -248,6 +248,89 @@ def unblock(
     return {"status": "unblocked"}
 
 
+@router.get("/league")
+def my_league(
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """This week's league cohort standings.
+
+    Unlike the friends leaderboard, a cohort contains learners you haven't
+    met — which is why eligibility runs through the same gate as friends.
+    """
+    from datetime import UTC, datetime, timedelta
+
+    from sqlalchemy import func
+
+    from app.models.game import LeagueCohort, LeagueMember, LeagueTier, XpEvent
+    from app.services import leagues
+
+    try:
+        friendships.assert_may_socialize(db, user)
+    except FriendshipError as exc:
+        return {"available": False, "reason": str(exc), "rows": []}
+
+    week_start = leagues.week_start_for(datetime.now(UTC).date())
+    membership = db.scalar(
+        select(LeagueMember)
+        .join(LeagueCohort, LeagueCohort.id == LeagueMember.cohort_id)
+        .where(LeagueMember.user_id == user.id, LeagueCohort.week_start == week_start)
+    )
+    if membership is None:
+        return {
+            "available": True,
+            "reason": "",
+            "note": "You'll join a league at the start of next week.",
+            "rows": [],
+        }
+
+    cohort = db.get(LeagueCohort, membership.cohort_id)
+    tier = db.get(LeagueTier, cohort.tier_id)
+    members = db.scalars(
+        select(LeagueMember).where(LeagueMember.cohort_id == cohort.id)
+    ).all()
+
+    start = datetime.combine(week_start, datetime.min.time(), tzinfo=UTC)
+    totals = dict(
+        db.execute(
+            select(XpEvent.user_id, func.coalesce(func.sum(XpEvent.amount), 0))
+            .where(
+                XpEvent.user_id.in_([m.user_id for m in members]),
+                XpEvent.awarded_at >= start,
+                XpEvent.awarded_at < start + timedelta(days=7),
+            )
+            .group_by(XpEvent.user_id)
+        ).all()
+    )
+    rows = sorted(
+        (
+            {
+                **_public(db, m.user_id),
+                "xp": int(totals.get(m.user_id, 0)),
+                "is_you": m.user_id == user.id,
+            }
+            for m in members
+        ),
+        key=lambda r: (-r["xp"], r["name"]),
+    )
+    for position, row in enumerate(rows, start=1):
+        row["rank"] = position
+        row["zone"] = (
+            "promote"
+            if position <= leagues.PROMOTE_COUNT and row["xp"] > 0
+            else "demote"
+            if position > len(rows) - leagues.DEMOTE_COUNT
+            else "stay"
+        )
+    return {
+        "available": True,
+        "reason": "",
+        "tier": tier.name if tier else "",
+        "week_start": week_start.isoformat(),
+        "rows": rows,
+    }
+
+
 @router.get("/leaderboard")
 def leaderboard(
     db: Session = Depends(get_db),

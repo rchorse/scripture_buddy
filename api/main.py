@@ -83,6 +83,9 @@ def handler(event, context):
     if task == "consent_followups":
         from app.jobs.consent_followups import consent_followups
         return consent_followups()
+    if task == "league_reset":
+        from app.jobs.league_reset import league_reset
+        return league_reset()
     if task == "streak_rollover":
         from app.jobs.streak_rollover import streak_rollover
         return streak_rollover()

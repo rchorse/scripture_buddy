@@ -71,7 +71,10 @@
       "Bash(sed -i 's/| Refuse further collection | Revoke `ai_processing` \\\\/ `social` | That use stops; account still works |/| Refuse further collection | Revoke `ai_processing` | That use stops; account still works |/' docs/compliance/coppa-program.md)",
       "Bash(sed -i 's/| `social` | see and be seen by approved friends on leaderboards |//' docs/compliance/consent-notice.md)",
       "Bash(PYTHONPATH=\".venv-deps:.\" python3 -m pytest tests/test_name_moderation.py -q)",
-      "Bash(aws logs *)"
+      "Bash(aws logs *)",
+      "Bash(xargs -I{} sh -c 'test {} -eq 1 && echo \"yes, pushed\" || echo \"NO - unpushed work\"')",
+      "Bash(PYTHONPATH=\".venv-deps:.\" python3 -m pytest tests/test_leagues.py -q)",
+      "Bash(curl -s -H 'Authorization: Bearer __TRACKED_VAR__' https://833658p105.execute-api.us-west-2.amazonaws.com/prod/v1/social/league)"
     ]
   }
 }

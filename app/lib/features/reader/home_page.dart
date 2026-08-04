@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../game/game_models.dart';
+import '../social/approvals_page.dart';
+import '../social/friends_page.dart';
+import '../social/league_page.dart';
 import '../game/progress_header.dart';
 import '../lessons/lesson_player_page.dart';
 import '../lessons/lessons_api.dart';
@@ -32,7 +35,35 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Library')),
+      appBar: AppBar(
+        title: const Text('Library'),
+        actions: [
+          IconButton(
+            tooltip: 'Leaderboards',
+            icon: const Icon(Icons.leaderboard),
+            onPressed: () async {
+              await Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const LeaguePage()),
+              );
+              if (mounted) setState(() => _progress = _lessons.progress());
+            },
+          ),
+          IconButton(
+            tooltip: 'Friends',
+            icon: const Icon(Icons.people_outline),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const FriendsPage()),
+            ),
+          ),
+          IconButton(
+            tooltip: 'Friend approvals',
+            icon: const Icon(Icons.family_restroom),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const ApprovalsPage()),
+            ),
+          ),
+        ],
+      ),
       body: FutureBuilder<List<WorkSummary>>(
         future: _works,
         builder: (context, snapshot) {
