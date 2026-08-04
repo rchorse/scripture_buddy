@@ -57,10 +57,25 @@ jobs:
       - name: Build and publish web
         working-directory: app
         run: |
-          flutter build web --release --dart-define=API_URL=${{ vars.API_URL }}
+          # All three are required. USER_POOL_ID and USER_POOL_CLIENT_ID have no
+          # defaults in AppConfig, and an empty clientId fails at sign-in with
+          # InvalidParameterException rather than at build time.
+          test -n "${{ vars.API_URL }}" || { echo "API_URL var is unset"; exit 1; }
+          test -n "${{ vars.USER_POOL_ID }}" || { echo "USER_POOL_ID var is unset"; exit 1; }
+          test -n "${{ vars.USER_POOL_CLIENT_ID }}" || { echo "USER_POOL_CLIENT_ID var is unset"; exit 1; }
+          flutter build web --release \
+            --dart-define=API_URL=${{ vars.API_URL }} \
+            --dart-define=USER_POOL_ID=${{ vars.USER_POOL_ID }} \
+            --dart-define=USER_POOL_CLIENT_ID=${{ vars.USER_POOL_CLIENT_ID }}
           BUCKET=$(aws cloudformation describe-stacks --stack-name ScriptureBuddyWeb \
             --query "Stacks[0].Outputs[?OutputKey=='BucketName'].OutputValue" --output text)
           DIST_ID=$(aws cloudformation describe-stacks --stack-name ScriptureBuddyWeb \
             --query "Stacks[0].Outputs[?OutputKey=='DistributionId'].OutputValue" --output text)
-          aws s3 sync build/web "s3://$BUCKET" --delete
+          # Entry points must revalidate: main.dart.js is not content-hashed, so
+          # without this browsers heuristically cache a stale app and a
+          # CloudFront invalidation cannot reach them.
+          aws s3 sync build/web "s3://$BUCKET" --delete \
+            --cache-control "no-cache, must-revalidate" --exclude "canvaskit/*"
+          aws s3 sync build/web/canvaskit "s3://$BUCKET/canvaskit" \
+            --delete --cache-control "public, max-age=2592000"
           aws cloudfront create-invalidation --distribution-id "$DIST_ID" --paths "/*"
