@@ -83,6 +83,19 @@ def bracket_of(user: User, today: date | None = None) -> str:
 
 
 def require_adult(user: User = Depends(get_current_user)) -> User:
+    """Guard for adult-only powers — chiefly acting as a parent.
+
+    An account that has not been through the age gate has no birth_date, and
+    `bracket_of` optimistically calls that adult so legacy rows keep working.
+    That default must not extend here: otherwise anyone who signs up and simply
+    never registers would hold parental powers over child accounts. Unknown age
+    is refused, and the client sends them back through registration.
+    """
+    if user.birth_date is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Please finish setting up your account before doing this.",
+        )
     if bracket_of(user) != ages.ADULT:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

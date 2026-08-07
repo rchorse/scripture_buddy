@@ -1,6 +1,9 @@
+import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter/material.dart';
 
+import '../family/family_page.dart';
 import '../game/game_models.dart';
+import '../onboarding/sign_in_page.dart';
 import '../social/approvals_page.dart';
 import '../social/friends_page.dart';
 import '../social/league_page.dart';
@@ -55,12 +58,33 @@ class _HomePageState extends State<HomePage> {
               MaterialPageRoute(builder: (_) => const FriendsPage()),
             ),
           ),
-          IconButton(
-            tooltip: 'Friend approvals',
-            icon: const Icon(Icons.family_restroom),
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const ApprovalsPage()),
-            ),
+          PopupMenuButton<String>(
+            onSelected: (choice) async {
+              switch (choice) {
+                case 'family':
+                  await Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const FamilyPage()),
+                  );
+                case 'approvals':
+                  await Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const ApprovalsPage()),
+                  );
+                case 'signout':
+                  await Amplify.Auth.signOut();
+                  if (context.mounted) {
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(builder: (_) => const SignInPage()),
+                      (route) => false,
+                    );
+                  }
+              }
+            },
+            itemBuilder: (_) => const [
+              PopupMenuItem(value: 'family', child: Text('Family')),
+              PopupMenuItem(value: 'approvals', child: Text('Friend approvals')),
+              PopupMenuDivider(),
+              PopupMenuItem(value: 'signout', child: Text('Sign out')),
+            ],
           ),
         ],
       ),
