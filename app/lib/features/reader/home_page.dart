@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../family/family_page.dart';
 import '../game/game_models.dart';
+import '../onboarding/onboarding_api.dart';
 import '../onboarding/sign_in_page.dart';
 import '../social/approvals_page.dart';
 import '../social/friends_page.dart';
@@ -33,6 +34,51 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     _works = _api.listWorks();
     _progress = _lessons.progress();
+  }
+
+  /// Deleting is reversible for a grace period, and the dialog says so — an
+  /// irreversible-sounding warning would push people to contact support
+  /// instead, which is the flow this exists to replace.
+  Future<void> _deleteAccount() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Delete your account?'),
+        content: const Text(
+          'Your progress, streaks and friends are erased after 30 days. Until '
+          'then you can sign in and keep the account instead.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Keep it'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    try {
+      await OnboardingApi().deleteAccount();
+      await Amplify.Auth.signOut();
+      if (mounted) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const SignInPage()),
+          (route) => false,
+        );
+      }
+    } on Object catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e is OnboardingApiException ? e.message : '$e'),
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -69,6 +115,8 @@ class _HomePageState extends State<HomePage> {
                   await Navigator.of(context).push(
                     MaterialPageRoute(builder: (_) => const ApprovalsPage()),
                   );
+                case 'delete':
+                  await _deleteAccount();
                 case 'signout':
                   await Amplify.Auth.signOut();
                   if (context.mounted) {
@@ -84,6 +132,7 @@ class _HomePageState extends State<HomePage> {
               PopupMenuItem(value: 'approvals', child: Text('Friend approvals')),
               PopupMenuDivider(),
               PopupMenuItem(value: 'signout', child: Text('Sign out')),
+              PopupMenuItem(value: 'delete', child: Text('Delete my account')),
             ],
           ),
         ],

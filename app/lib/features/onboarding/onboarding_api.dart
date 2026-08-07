@@ -126,6 +126,12 @@ class OnboardingApi {
     });
   }
 
+  /// Schedules the account for erasure. Reversible until the purge runs.
+  Future<Map<String, dynamic>> deleteAccount() async =>
+      await _send('POST', '/v1/me/delete') as Map<String, dynamic>;
+
+  Future<void> cancelDeletion() async => _send('POST', '/v1/me/cancel-deletion');
+
   /// The IANA name streak roll-over depends on. Falls back to UTC rather than
   /// guessing: a wrong zone silently breaks streaks at the day boundary.
   static Future<String> deviceTimezone() async {

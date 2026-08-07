@@ -16,15 +16,20 @@ from app.models.core import FamilyMember, User
 from app.services import ages, consent
 
 
-def get_current_user(
+def get_current_user_any_status(
     identity: TokenIdentity = Depends(get_token_identity),
     db: Session = Depends(get_db),
 ) -> User:
-    """The signed-in user, provisioned on first contact.
+    """The signed-in user, provisioned on first contact, whatever their status.
 
     Self-provisioning only ever creates an ADULT-shaped row: a child account is
     created by a parent ahead of time and claimed at first sign-in, so a child
     can never bootstrap themselves past the age gate.
+
+    Use this only where the *status itself* is the answer — reporting a profile,
+    or cancelling a deletion. Someone who changed their mind has to be able to
+    sign in and say so, and `get_current_user` deliberately refuses them.
+    Everything else wants `get_current_user`.
     """
     user = db.scalar(select(User).where(User.cognito_sub == identity.sub))
     if user is None:
@@ -56,6 +61,11 @@ def get_current_user(
         user.is_owner = identity.is_owner
         db.commit()
 
+    return user
+
+
+def get_current_user(user: User = Depends(get_current_user_any_status)) -> User:
+    """The signed-in user, refused unless the account is usable."""
     if user.status == "suspended":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
