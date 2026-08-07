@@ -73,12 +73,19 @@ def set_display_name(
 
     Screening is fail-closed: an undecided name is stored but not shown, and
     the username is displayed until it clears.
+
+    Screening a child's name means sending it to a third-party model, which is
+    exactly what the `ai_processing` scope covers. Without that consent we do
+    not send it — the child keeps their username as their public name rather
+    than us processing text they wrote without a parent's permission.
     """
-    from app.core.principal import bracket_of
+    from app.core.principal import bracket_of, require_consent
     from app.services import ages
 
     name = (body.get("display_name") or "").strip()
     is_child = bracket_of(user) == ages.UNDER_13
+    if is_child:
+        require_consent(db, user, "ai_processing")
     verdict = name_moderation.screen(name, is_child=is_child)
 
     if verdict["status"] == name_moderation.FLAGGED:

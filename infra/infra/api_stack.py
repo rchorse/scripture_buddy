@@ -17,6 +17,10 @@ from aws_cdk import (
     aws_events_targets as targets,
     aws_s3 as s3,
     aws_secretsmanager as secretsmanager,
+    aws_cloudwatch as cloudwatch,
+    aws_cloudwatch_actions as cw_actions,
+    aws_sns as sns,
+    aws_sns_subscriptions as sns_subs,
     Duration,
     CfnOutput,
     RemovalPolicy,
@@ -262,6 +266,8 @@ class ApiStack(Stack):
         self.api.root.add_method("ANY", lambda_integration)
         proxy.add_method("ANY", lambda_integration)
 
+        self._add_alarms()
+
         CfnOutput(self, "ApiUrl", value=self.api.url)
         CfnOutput(self, "LambdaFunctionName", value=self.api_function.function_name)
         CfnOutput(self, "DataBucketName", value=self.data_bucket.bucket_name)
@@ -284,3 +290,70 @@ class ApiStack(Stack):
                 "ApiCustomDomainTarget",
                 value=domain.domain_name_alias_domain_name,
             )
+
+    def _add_alarms(self) -> None:
+        """Operational alarms for a service with no one watching it.
+
+        Everything here is a symptom a user would feel: requests failing,
+        requests being dropped, or requests taking long enough to look broken.
+        Notifications go to `alarm_email` from cdk.json context; without it the
+        alarms still exist and are visible in the console, they just page no one.
+        """
+        topic = sns.Topic(
+            self, "AlarmTopic", display_name="ScriptureBuddy alerts"
+        )
+        alarm_email = self.node.try_get_context("alarm_email")
+        if alarm_email:
+            topic.add_subscription(sns_subs.EmailSubscription(alarm_email))
+        self.alarm_topic = topic
+
+        def alarm(construct_id: str, metric, threshold, evaluation_periods, description,
+                  comparison=cloudwatch.ComparisonOperator.GREATER_THAN_THRESHOLD):
+            created = cloudwatch.Alarm(
+                self,
+                construct_id,
+                metric=metric,
+                threshold=threshold,
+                evaluation_periods=evaluation_periods,
+                comparison_operator=comparison,
+                alarm_description=description,
+                # Gaps are normal on a low-traffic service that scales to zero;
+                # "no data" must not read as failure or it alarms every night.
+                treat_missing_data=cloudwatch.TreatMissingData.NOT_BREACHING,
+            )
+            created.add_alarm_action(cw_actions.SnsAction(topic))
+            return created
+
+        alarm(
+            "ApiServerErrors",
+            self.api.metric_server_error(period=Duration.minutes(5), statistic="Sum"),
+            threshold=1,
+            evaluation_periods=2,
+            description="API Gateway returned 5xx over two consecutive periods.",
+        )
+        alarm(
+            "LambdaErrors",
+            self.api_function.metric_errors(period=Duration.minutes(5), statistic="Sum"),
+            threshold=3,
+            evaluation_periods=2,
+            description="The API Lambda is raising unhandled exceptions.",
+        )
+        alarm(
+            "LambdaThrottles",
+            self.api_function.metric_throttles(
+                period=Duration.minutes(5), statistic="Sum"
+            ),
+            threshold=1,
+            evaluation_periods=1,
+            description="Requests are being dropped before the handler runs.",
+        )
+        alarm(
+            "ApiLatencyP99",
+            self.api.metric_latency(period=Duration.minutes(5), statistic="p99"),
+            threshold=5000,
+            evaluation_periods=3,
+            description=(
+                "p99 latency above 5s. Aurora resuming from zero is a legitimate "
+                "cause, so this needs three periods before it fires."
+            ),
+        )
