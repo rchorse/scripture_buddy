@@ -1,6 +1,8 @@
 import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter/material.dart';
 
+import '../../core/auth_timeout.dart';
+
 import '../reader/home_page.dart';
 import 'onboarding_api.dart';
 
@@ -63,11 +65,16 @@ class _ConfirmSignUpPageState extends State<ConfirmSignUpPage> {
       _error = '';
     });
     try {
-      await Amplify.Auth.confirmSignUp(
-        username: widget.username,
-        confirmationCode: _code.text.trim(),
+      await guardAuth(
+        Amplify.Auth.confirmSignUp(
+          username: widget.username,
+          confirmationCode: _code.text.trim(),
+        ),
+        what: 'Confirming',
       );
       await _finish();
+    } on AuthTimeout catch (e) {
+      setState(() => _error = e.message);
     } on AuthException catch (e) {
       setState(() => _error = e.message);
     } on Object catch (e) {
@@ -84,9 +91,12 @@ class _ConfirmSignUpPageState extends State<ConfirmSignUpPage> {
       _error = '';
     });
     try {
-      final signIn = await Amplify.Auth.signIn(
-        username: widget.username,
-        password: widget.password,
+      final signIn = await guardAuth(
+        Amplify.Auth.signIn(
+          username: widget.username,
+          password: widget.password,
+        ),
+        what: 'Signing in',
       );
       if (!signIn.isSignedIn) {
         setState(() => _error = 'Confirmed. Please sign in to continue.');

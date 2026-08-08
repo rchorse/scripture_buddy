@@ -1,6 +1,8 @@
 import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter/material.dart';
 
+import '../../core/auth_timeout.dart';
+
 import '../../core/session_reset.dart';
 import '../reader/home_page.dart';
 import 'age_gate_page.dart';
@@ -40,9 +42,12 @@ class _SignInPageState extends State<SignInPage> {
       _status = 'Signing in…';
     });
     try {
-      final result = await Amplify.Auth.signIn(
-        username: _username.text.trim().toLowerCase(),
-        password: _password.text,
+      final result = await guardAuth(
+        Amplify.Auth.signIn(
+          username: _username.text.trim().toLowerCase(),
+          password: _password.text,
+        ),
+        what: 'Signing in',
       );
       if (!result.isSignedIn) {
         setState(() => _status =
@@ -50,6 +55,8 @@ class _SignInPageState extends State<SignInPage> {
         return;
       }
       await _afterSignIn();
+    } on AuthTimeout catch (e) {
+      setState(() => _status = e.message);
     } on AuthException catch (e) {
       // A session left over from a previous visit blocks a fresh sign-in.
       // Signing out clears it but leaves Amplify unable to sign in again until

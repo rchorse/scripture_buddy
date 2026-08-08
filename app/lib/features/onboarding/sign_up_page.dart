@@ -1,6 +1,8 @@
 import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter/material.dart';
 
+import '../../core/auth_timeout.dart';
+
 import 'confirm_sign_up_page.dart';
 import 'password_field.dart';
 
@@ -60,12 +62,15 @@ class _SignUpPageState extends State<SignUpPage> {
       _error = '';
     });
     try {
-      final result = await Amplify.Auth.signUp(
-        username: _username.text.trim().toLowerCase(),
-        password: _password.text,
-        options: SignUpOptions(
-          userAttributes: {AuthUserAttributeKey.email: _email.text.trim()},
+      final result = await guardAuth(
+        Amplify.Auth.signUp(
+          username: _username.text.trim().toLowerCase(),
+          password: _password.text,
+          options: SignUpOptions(
+            userAttributes: {AuthUserAttributeKey.email: _email.text.trim()},
+          ),
         ),
+        what: 'Creating your account',
       );
       if (!mounted) return;
       Navigator.of(context).push(
@@ -79,6 +84,8 @@ class _SignUpPageState extends State<SignUpPage> {
           ),
         ),
       );
+    } on AuthTimeout catch (e) {
+      setState(() => _error = e.message);
     } on AuthException catch (e) {
       setState(() => _error = e.message);
     } on Object catch (e) {
