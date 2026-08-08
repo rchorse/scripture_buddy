@@ -129,14 +129,13 @@ Protection Act:
 
 ## Known gaps — must close before publishing
 
-1. **Contact address.** Both stores and COPPA require a monitored contact point.
-   Not yet chosen.
-2. **Not hosted anywhere.** This document has to be reachable at a stable public
-   URL, linked from the app and from both store listings.
-3. **Legal review.** In particular the email-plus consent method, and the fact
+1. **`privacy@scripturebuddy.net` does not receive mail yet.** The policy is
+   live and names that address, so mail to it currently bounces. Cloudflare
+   Email Routing (free) will forward it; needs MX records on the apex.
+2. **Legal review.** In particular the email-plus consent method, and the fact
    that a child's screened display name is visible to unrelated learners in a
    league cohort. Raised in `coppa-program.md` and still open.
-4. **SES not configured.** Consent email does not currently send, so the
-   parental confirmation step described above cannot complete.
-5. **Retention sweep evidence.** The 30-day purge is implemented and was
+3. **SES production access pending.** Requested 8 August 2026; until approved,
+   consent email only reaches addresses verified in SES.
+4. **Retention sweep evidence.** The 30-day purge is implemented and was
    verified once by hand; it is not yet covered by an automated test.

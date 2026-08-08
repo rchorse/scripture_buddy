@@ -2,6 +2,7 @@ import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/auth_timeout.dart';
+import '../../core/open_url.dart';
 import '../../core/session_reset.dart';
 import '../../core/sign_in_options.dart';
 import '../reader/home_page.dart';
@@ -154,6 +155,16 @@ class _SignInPageState extends State<SignInPage> {
                       const SizedBox(height: 24),
                       Text(_status, textAlign: TextAlign.center),
                     ],
+                    const SizedBox(height: 24),
+                    // Both stores expect the policy to be reachable from the
+                    // app, not only from the listing.
+                    TextButton(
+                      onPressed: () => openUrl('/privacy.html'),
+                      child: Text(
+                        'Privacy policy',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ),
                   ],
                 ),
               ),

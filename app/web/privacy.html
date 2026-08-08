@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy Policy — ScriptureBuddy</title>
+<style>
+  :root { color-scheme: light dark; }
+  body {
+    margin: 0 auto; padding: 2rem 1.25rem 4rem; max-width: 42rem;
+    font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: #1b2a1b; background: #f6faf3;
+  }
+  h1 { font-size: 1.9rem; margin-bottom: .25rem; }
+  h2 { font-size: 1.25rem; margin-top: 2.25rem; border-bottom: 1px solid #cfe0c9; padding-bottom: .3rem; }
+  h3 { font-size: 1rem; margin-top: 1.5rem; }
+  .updated { color: #5a6b57; margin-top: 0; }
+  table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+  th, td { text-align: left; padding: .5rem .6rem; border-bottom: 1px solid #d9e6d4; vertical-align: top; }
+  th { background: #e8f2e4; }
+  .lead { background: #e8f2e4; padding: 1rem 1.2rem; border-radius: .5rem; }
+  code { background: #e8f2e4; padding: .1rem .3rem; border-radius: .2rem; }
+  a { color: #2e7d32; }
+  @media (prefers-color-scheme: dark) {
+    body { color: #e6efe3; background: #141813; }
+    th { background: #1f291d; }
+    .lead { background: #1f291d; }
+    code { background: #1f291d; }
+    h2 { border-bottom-color: #2c3a29; }
+    th, td { border-bottom-color: #263123; }
+    .updated { color: #9db298; }
+    a { color: #8bd18f; }
+  }
+</style>
+</head>
+<body>
+
+<h1>ScriptureBuddy Privacy Policy</h1>
+<p class="updated">Last updated: 8 August 2026</p>
+
+<div class="lead">
+<p><strong>The short version.</strong> ScriptureBuddy helps people read and memorise
+scripture. We collect the least we can, we show no ads, and we never sell your
+information.</p>
+<p><strong>There is no chat, no messaging, and no way for users to send each other
+text.</strong> The only thing one user can see another write is a display name, and
+every display name is screened before anyone else sees it.</p>
+<p>Accounts for children under 13 are deliberately narrower than adult accounts:
+we do not collect an email address, phone number, real name, or location for a
+child.</p>
+</div>
+
+<h2>What we collect</h2>
+
+<h3>Adults and teenagers (13 and over)</h3>
+<table>
+  <tr><th>Data</th><th>Why</th></tr>
+  <tr><td>Username</td><td>Signing in; visible to friends</td></tr>
+  <tr><td>Email address</td><td>Confirming your account and resetting your password</td></tr>
+  <tr><td>Password</td><td>Signing in. Held by AWS Cognito, never by us in readable form</td></tr>
+  <tr><td>Date of birth</td><td>Applying the right protections for your age. Stored once and not editable in the app</td></tr>
+  <tr><td>Time zone</td><td>Working out when your day ends, so streaks are correct</td></tr>
+  <tr><td>Display name (optional)</td><td>What friends see instead of your username</td></tr>
+  <tr><td>Progress: lessons, answers, XP, streaks, review schedule</td><td>Running the app and showing you how you are doing</td></tr>
+  <tr><td>Friends and blocks</td><td>The friends list and leaderboards</td></tr>
+</table>
+
+<h3>Children under 13</h3>
+<p>A parent or guardian creates the account. We collect a <strong>username</strong> the
+parent chooses, the child's <strong>date of birth</strong> (used only to apply the right
+protections), their <strong>time zone</strong>, an optional <strong>display name</strong> that is
+screened before anyone sees it, and their <strong>progress</strong> in the app.</p>
+<p>We do <strong>not</strong> collect a child's email address, phone number, real name,
+photograph, voice, precise location, or any persistent identifier used for
+advertising.</p>
+
+<h2>How we use it</h2>
+<p>To run the app: show you the right lessons, mark your answers, schedule your
+reviews, keep your streak, and show leaderboards among friends.</p>
+<p>We do not use your information to advertise to you, we do not sell or rent it,
+and we do not use your personal information to train AI models.</p>
+
+<h2>Who else sees it</h2>
+<ul>
+  <li><strong>Amazon Web Services</strong> hosts the app and stores its data (United States).
+      AWS Cognito holds sign-in credentials.</li>
+  <li><strong>Anthropic</strong> provides the model that screens display names. When a display
+      name is submitted, that text is sent to Anthropic to check it. For a child's
+      account this happens <em>only if a parent has consented to AI processing</em>;
+      without that consent the child's public name is simply their username.
+      Practice questions are generated ahead of time from scripture text alone —
+      no user information is involved.</li>
+</ul>
+<p>Other users see only your display name (or username) and your position on a
+leaderboard, and only if you are their friend. We may disclose information if
+the law requires it.</p>
+
+<h2>Parents: your rights</h2>
+<p>At any time, from the Family screen in the app or by contacting us, you can:</p>
+<ul>
+  <li><strong>See</strong> what we have collected about your child.</li>
+  <li><strong>Withdraw consent</strong> for any purpose, individually. Withdrawing consent for
+      friends removes access to friends and leaderboards; withdrawing consent for
+      AI processing stops us sending their display name for screening.</li>
+  <li><strong>Delete</strong> the account. Deletion is scheduled immediately and the data is
+      irreversibly erased after 30 days, during which you can cancel it.</li>
+  <li><strong>Refuse</strong> any further collection, by deleting the account.</li>
+</ul>
+<p>Consent is recorded per purpose (<code>account</code>, <code>ai_processing</code>,
+<code>social</code>), and only <code>account</code> is required to use the app at all. Our
+record of consent decisions is append-only and outlives the account, because we
+have to be able to show what was agreed and when.</p>
+
+<h2>How long we keep things</h2>
+<p>Account data lives as long as the account does. A deleted account is purged 30
+days after the request. The consent audit trail is kept indefinitely, because
+COPPA requires us to be able to evidence consent.</p>
+
+<h2>Security</h2>
+<p>Data is encrypted in transit and at rest. The database is not reachable from
+the public internet. Access to production data is limited to the operator of the
+service.</p>
+
+<h2>Changes</h2>
+<p>If we change how we use information already collected from a child, we will ask
+the parent to consent again rather than relying on the original consent.</p>
+
+<h2>Children's privacy (COPPA)</h2>
+<p>ScriptureBuddy is intended for general audiences and is used by children under
+13 with a parent's involvement. We follow the Children's Online Privacy
+Protection Act:</p>
+<ul>
+  <li>A neutral age screen runs before any account is created. It stores nothing.</li>
+  <li>A child under 13 cannot create their own account and is never shown a signup form.</li>
+  <li>A parent creates the account and receives an email asking them to confirm.
+      The account cannot be used until they do.</li>
+  <li>We collect no more from a child than is reasonably necessary to take part.</li>
+  <li>A parent may review, withdraw consent, or delete at any time.</li>
+</ul>
+
+<h2>Contact</h2>
+<p>Questions about this policy, or about your child's information:
+<a href="mailto:privacy@scripturebuddy.net">privacy@scripturebuddy.net</a></p>
+
+</body>
+</html>
