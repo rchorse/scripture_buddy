@@ -1,5 +1,6 @@
 import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter/material.dart';
+import '../../core/cognito_api.dart';
 
 import 'password_field.dart';
 
@@ -46,12 +47,13 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       _notice = '';
     });
     try {
-      final result =
-          await Amplify.Auth.resetPassword(username: _username.text.trim());
+      await CognitoApi().forgotPassword(_username.text.trim());
       setState(() {
-        _codeSent = !result.isPasswordReset;
+        _codeSent = true;
         _notice = 'If that account has an email on file, a code is on its way.';
       });
+    } on CognitoException catch (e) {
+      setState(() => _error = e.message);
     } on AuthException catch (e) {
       setState(() => _error = e.message);
     } finally {
@@ -69,16 +71,18 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       _error = '';
     });
     try {
-      await Amplify.Auth.confirmResetPassword(
+      await CognitoApi().confirmForgotPassword(
         username: _username.text.trim(),
+        code: _code.text.trim(),
         newPassword: _newPassword.text,
-        confirmationCode: _code.text.trim(),
       );
       if (!mounted) return;
       Navigator.of(context).pop();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Password changed — sign in with it now.')),
       );
+    } on CognitoException catch (e) {
+      setState(() => _error = e.message);
     } on AuthException catch (e) {
       setState(() => _error = e.message);
     } finally {

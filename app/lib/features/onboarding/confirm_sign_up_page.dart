@@ -1,5 +1,6 @@
 import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter/material.dart';
+import '../../core/cognito_api.dart';
 
 import '../../core/auth_timeout.dart';
 
@@ -66,14 +67,16 @@ class _ConfirmSignUpPageState extends State<ConfirmSignUpPage> {
     });
     try {
       await guardAuth(
-        Amplify.Auth.confirmSignUp(
+        CognitoApi().confirmSignUp(
           username: widget.username,
-          confirmationCode: _code.text.trim(),
+          code: _code.text.trim(),
         ),
         what: 'Confirming',
       );
       await _finish();
     } on AuthTimeout catch (e) {
+      setState(() => _error = e.message);
+    } on CognitoException catch (e) {
       setState(() => _error = e.message);
     } on AuthException catch (e) {
       setState(() => _error = e.message);
@@ -125,8 +128,10 @@ class _ConfirmSignUpPageState extends State<ConfirmSignUpPage> {
       _error = '';
     });
     try {
-      await Amplify.Auth.resendSignUpCode(username: widget.username);
+      await CognitoApi().resendCode(widget.username);
       setState(() => _notice = 'We sent a new code to ${widget.email}.');
+    } on CognitoException catch (e) {
+      setState(() => _error = e.message);
     } on AuthException catch (e) {
       setState(() => _error = e.message);
     }

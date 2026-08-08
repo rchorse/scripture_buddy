@@ -1,5 +1,5 @@
-import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter/material.dart';
+import '../../core/cognito_api.dart';
 
 import '../../core/auth_timeout.dart';
 
@@ -62,13 +62,11 @@ class _SignUpPageState extends State<SignUpPage> {
       _error = '';
     });
     try {
-      final result = await guardAuth(
-        Amplify.Auth.signUp(
+      await guardAuth(
+        CognitoApi().signUp(
           username: _username.text.trim().toLowerCase(),
           password: _password.text,
-          options: SignUpOptions(
-            userAttributes: {AuthUserAttributeKey.email: _email.text.trim()},
-          ),
+          email: _email.text.trim(),
         ),
         what: 'Creating your account',
       );
@@ -80,14 +78,16 @@ class _SignUpPageState extends State<SignUpPage> {
             password: _password.text,
             birthDate: widget.birthDate,
             email: _email.text.trim(),
-            alreadyConfirmed: result.isSignUpComplete,
+            alreadyConfirmed: false,
           ),
         ),
       );
     } on AuthTimeout catch (e) {
       setState(() => _error = e.message);
-    } on AuthException catch (e) {
-      setState(() => _error = e.message);
+    } on CognitoException catch (e) {
+      setState(() => _error = e.isAlreadyExists
+          ? 'That username is taken. Try another, or sign in instead.'
+          : e.message);
     } on Object catch (e) {
       setState(() => _error = '$e');
     } finally {
