@@ -16,6 +16,7 @@ dependencies:
   go_router: ^14.0.0
   flutter_riverpod: ^2.5.0
   flutter_timezone: ^5.1.0
+  web: ^1.1.1
 
 dev_dependencies:
   flutter_test:

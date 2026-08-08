@@ -1,6 +1,7 @@
 import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter/material.dart';
 
+import '../../core/session_reset.dart';
 import '../family/family_page.dart';
 import '../game/game_models.dart';
 import '../onboarding/onboarding_api.dart';
@@ -36,6 +37,19 @@ class _HomePageState extends State<HomePage> {
     _progress = _lessons.progress();
   }
 
+  /// On web this ends the page rather than returning to the sign-in screen:
+  /// Amplify cannot sign anyone in again after a sign-out without a reload.
+  Future<void> _signOut() async {
+    await Amplify.Auth.signOut();
+    if (await resetAfterSignOut()) return;
+    if (mounted) {
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const SignInPage()),
+        (route) => false,
+      );
+    }
+  }
+
   /// Deleting is reversible for a grace period, and the dialog says so — an
   /// irreversible-sounding warning would push people to contact support
   /// instead, which is the flow this exists to replace.
@@ -63,13 +77,7 @@ class _HomePageState extends State<HomePage> {
     if (confirmed != true) return;
     try {
       await OnboardingApi().deleteAccount();
-      await Amplify.Auth.signOut();
-      if (mounted) {
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const SignInPage()),
-          (route) => false,
-        );
-      }
+      await _signOut();
     } on Object catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -118,13 +126,7 @@ class _HomePageState extends State<HomePage> {
                 case 'delete':
                   await _deleteAccount();
                 case 'signout':
-                  await Amplify.Auth.signOut();
-                  if (context.mounted) {
-                    Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(builder: (_) => const SignInPage()),
-                      (route) => false,
-                    );
-                  }
+                  await _signOut();
               }
             },
             itemBuilder: (_) => const [

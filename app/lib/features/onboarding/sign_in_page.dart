@@ -1,6 +1,7 @@
 import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter/material.dart';
 
+import '../../core/session_reset.dart';
 import '../reader/home_page.dart';
 import 'age_gate_page.dart';
 import 'forgot_password_page.dart';
@@ -50,11 +51,13 @@ class _SignInPageState extends State<SignInPage> {
       }
       await _afterSignIn();
     } on AuthException catch (e) {
-      // A session left over from a previous visit blocks a fresh sign-in. Clear
-      // it and let the reader try again rather than signing out pre-emptively
-      // on every attempt, which is a round trip that can hang on web.
+      // A session left over from a previous visit blocks a fresh sign-in.
+      // Signing out clears it but leaves Amplify unable to sign in again until
+      // the page reloads, so reload rather than inviting a retry that would
+      // hang. On mobile resetAfterSignOut is a no-op and the retry is fine.
       if (e is SignedOutException || e.message.contains('already a user signed in')) {
         await Amplify.Auth.signOut();
+        if (await resetAfterSignOut()) return;
         setState(() => _status = 'Please try that once more.');
         return;
       }

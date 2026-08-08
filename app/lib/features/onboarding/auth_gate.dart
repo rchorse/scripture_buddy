@@ -1,6 +1,7 @@
 import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter/material.dart';
 
+import '../../core/session_reset.dart';
 import '../reader/home_page.dart';
 import 'age_gate_page.dart';
 import 'onboarding_api.dart';
@@ -9,9 +10,10 @@ import 'sign_in_page.dart';
 /// Decides the first screen: sign in, finish registering, or the app.
 ///
 /// Restoring an existing session here is what lets the sign-in screen drop its
-/// old `signOut()`-before-`signIn()` call. That call existed to clear a stale
-/// session, but it is a network round trip that can hang on web and strand the
-/// UI on "Signing in…" forever.
+/// old `signOut()`-before-`signIn()` call. That call ran on every attempt, and
+/// on web a sign-out leaves Amplify unable to sign in again until the page
+/// reloads — which is why sign-in used to hang on "Signing in…" forever. See
+/// `core/session_reset_web.dart`.
 class AuthGate extends StatefulWidget {
   const AuthGate({super.key});
 
@@ -174,6 +176,7 @@ class _PendingDeletionState extends State<_PendingDeletion> {
                 TextButton(
                   onPressed: () async {
                     await Amplify.Auth.signOut();
+                    if (await resetAfterSignOut()) return;
                     if (context.mounted) {
                       Navigator.of(context).pushAndRemoveUntil(
                         MaterialPageRoute(builder: (_) => const SignInPage()),
@@ -228,6 +231,7 @@ class _Blocked extends StatelessWidget {
                 OutlinedButton(
                   onPressed: () async {
                     await Amplify.Auth.signOut();
+                    if (await resetAfterSignOut()) return;
                     if (context.mounted) {
                       Navigator.of(context).pushAndRemoveUntil(
                         MaterialPageRoute(builder: (_) => const SignInPage()),
