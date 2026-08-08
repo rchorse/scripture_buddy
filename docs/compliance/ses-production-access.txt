@@ -1,0 +1,82 @@
+Thanks — here is the detail you asked for.
+
+VERIFIED IDENTITY
+We have a verified domain identity, not just an address: scripturebuddy.net,
+verified in us-west-2 with DKIM signing enabled (2048-bit), a custom MAIL FROM
+subdomain (mail.scripturebuddy.net) for SPF alignment, and a DMARC record
+published. All sending is from noreply@scripturebuddy.net.
+
+WHAT THE APPLICATION IS
+ScriptureBuddy (https://scripturebuddy.net) is a scripture-study app for
+families. It has no chat or messaging of any kind, no advertising, and no
+mailing list. We do not send marketing, newsletters, or bulk mail of any
+description, and we have no facility to do so.
+
+HOW OFTEN WE SEND
+Every message is triggered by an action the recipient just took in the app.
+There is no scheduled or campaign sending. Current volume is a handful of
+messages per day during private testing. We expect under 100 per day at first
+and well under 1,000 per day at realistic scale. Peak sending is one message per
+account creation.
+
+HOW RECIPIENT LISTS ARE MAINTAINED
+There is no list. We do not maintain, buy, rent, import, or scrape recipient
+lists. An address enters our system in exactly one way: a person types their own
+address into our sign-up form to create their own account. It is stored on that
+account in AWS Cognito and used only for that account's own transactional mail.
+There is no way for one user to cause mail to be sent to a different person's
+address. When an account is deleted, the address is erased with it.
+
+THE THREE MESSAGE TYPES
+
+1. Parental consent confirmation (our main use case)
+   When an adult creates an account for a child under 13, the US Children's
+   Online Privacy Protection Act requires verifiable parental consent before the
+   child's account may be used. We email the parent — at the address on the
+   parent's own account, which they entered themselves — a one-time link to
+   confirm. A second confirmatory message follows 24 hours later, which is the
+   "email plus" method the FTC describes. The child's account is unusable until
+   the parent confirms.
+
+   Subject: Please confirm consent for <child-username> on ScriptureBuddy
+   Body (abridged):
+     You asked to create a ScriptureBuddy account for <child-username>.
+     Because they are under 13, US law (COPPA) requires us to confirm that a
+     parent or guardian consents before the account can be used.
+     You are being asked to consent to let them <purpose>.
+     What we collect for a child account: a username you choose, their birth
+     date (used only to apply the right protections), their timezone, and their
+     progress in the app. We do not collect an email address, phone number, real
+     name, or location for a child. We do not show ads, and we never sell or
+     share their information.
+     [one-time confirmation link, valid 72 hours]
+     If you did not ask for this, ignore this email and nothing will happen.
+
+2. Account verification codes at sign-up — a numeric code sent to the address
+   the person just entered, to prove they own it.
+
+3. Password reset codes — sent only when the account holder requests a reset.
+
+BOUNCES, COMPLAINTS AND UNSUBSCRIBES
+- We monitor the account's bounce and complaint rates and will configure an SNS
+  event destination for bounce and complaint notifications before production
+  sending.
+- Hard bounces are suppressed immediately and the address is not retried. In our
+  case a hard bounce means a broken account rather than a stale list entry, so
+  it is a defect we investigate rather than a row we quietly drop.
+- Complaints are treated as an immediate, permanent suppression for that
+  address.
+- We rely on the account-level suppression list in addition to our own.
+- Unsubscribe does not apply: these are consent, verification, and password
+  messages that exist because the recipient asked for them, and none of them are
+  promotional. Any user can delete their account from within the app, which
+  erases the address and stops all mail to them permanently.
+
+WHY WE NEED PRODUCTION ACCESS
+In the sandbox we can only deliver to addresses verified in advance. The parental
+consent flow sends to whichever address a parent used to create their own
+account, so it cannot work in the sandbox for anyone but us — which means the
+COPPA consent step, and therefore any account for a child under 13, cannot
+function.
+
+Happy to provide anything else that would help.

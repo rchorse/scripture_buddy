@@ -1,13 +1,14 @@
 # ScriptureBuddy Privacy Policy
 
-**Draft — not yet reviewed by a lawyer, and not yet published.** Everything
-below describes what the code actually does today; see "Known gaps" at the end
-for the places where that is not yet true, which must close before this is
-posted.
+**Published at https://scripturebuddy.net/privacy.html.** The source of truth is
+`app/web/privacy.html`, which ships with every web build; this file is the
+reviewable copy and the record of what is still open.
 
-**Last updated:** _(fill in on publication)_
-**Contact:** _(fill in — a monitored address is required by both app stores and
-by COPPA)_
+**Still not reviewed by a lawyer.** Everything below describes what the code
+actually does today.
+
+**Last updated:** 8 August 2026
+**Contact:** privacy@scripturebuddy.net — **mail routing not yet configured**
 
 ---
 
@@ -127,7 +128,7 @@ Protection Act:
 
 ---
 
-## Known gaps — must close before publishing
+## Known gaps — still open
 
 1. **`privacy@scripturebuddy.net` does not receive mail yet.** The policy is
    live and names that address, so mail to it currently bounces. Cloudflare
