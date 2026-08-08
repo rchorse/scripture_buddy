@@ -17,6 +17,12 @@ logger = logging.getLogger(__name__)
 
 SENDER = os.environ.get("CONSENT_EMAIL_SENDER", "")
 
+# Attaches the messages to a configuration set that publishes bounces and
+# complaints to SNS. A parent's confirmation email is the one message we cannot
+# afford to send blindly: when it bounces, a child's account sits in
+# pending_consent and the parent never learns why.
+CONFIGURATION_SET = os.environ.get("SES_CONFIGURATION_SET", "")
+
 
 def send(to_address: str, subject: str, body_text: str, body_html: str = "") -> dict:
     if not SENDER:
@@ -37,6 +43,11 @@ def send(to_address: str, subject: str, body_text: str, body_html: str = "") -> 
                 "Subject": {"Data": subject, "Charset": "UTF-8"},
                 "Body": body,
             },
+            **(
+                {"ConfigurationSetName": CONFIGURATION_SET}
+                if CONFIGURATION_SET
+                else {}
+            ),
         )
         return {"delivered": True, "message_id": response["MessageId"]}
     except Exception as exc:  # noqa: BLE001 — never lose a consent request

@@ -19,6 +19,7 @@ from aws_cdk import (
     aws_secretsmanager as secretsmanager,
     aws_cloudwatch as cloudwatch,
     aws_cloudwatch_actions as cw_actions,
+    aws_ses as ses,
     aws_sns as sns,
     aws_sns_subscriptions as sns_subs,
     Duration,
@@ -269,6 +270,7 @@ class ApiStack(Stack):
         proxy.add_method("ANY", lambda_integration)
 
         self._add_alarms()
+        self._add_email_monitoring(consent_sender)
 
         CfnOutput(self, "ApiUrl", value=self.api.url)
         CfnOutput(self, "LambdaFunctionName", value=self.api_function.function_name)
@@ -358,4 +360,77 @@ class ApiStack(Stack):
                 "p99 latency above 5s. Aurora resuming from zero is a legitimate "
                 "cause, so this needs three periods before it fires."
             ),
+        )
+
+    def _add_email_monitoring(self, consent_sender: str) -> None:
+        """Bounce and complaint handling for consent email.
+
+        A parent's confirmation email is the one message this service cannot
+        afford to send blindly: if it bounces, a child's account is stuck in
+        pending_consent and the parent has no idea why. So bounces and
+        complaints are published as events rather than left to be discovered.
+
+        Reputation metrics only exist once SES has sent something, so the alarms
+        treat missing data as not-breaching.
+        """
+        if not consent_sender:
+            return
+
+        self.email_events = sns.Topic(
+            self, "EmailEventsTopic", display_name="ScriptureBuddy email events"
+        )
+        alarm_email = self.node.try_get_context("alarm_email")
+        if alarm_email:
+            self.email_events.add_subscription(
+                sns_subs.EmailSubscription(alarm_email)
+            )
+
+        self.email_config_set = ses.ConfigurationSet(
+            self, "EmailConfigSet", configuration_set_name="scripturebuddy-transactional"
+        )
+        self.email_config_set.add_event_destination(
+            "BounceAndComplaint",
+            destination=ses.EventDestination.sns_topic(self.email_events),
+            events=[
+                ses.EmailSendingEvent.BOUNCE,
+                ses.EmailSendingEvent.COMPLAINT,
+                ses.EmailSendingEvent.REJECT,
+                ses.EmailSendingEvent.RENDERING_FAILURE,
+            ],
+        )
+        self.api_function.add_environment(
+            "SES_CONFIGURATION_SET", self.email_config_set.configuration_set_name
+        )
+
+        def ses_alarm(construct_id: str, metric_name: str, threshold: float, description: str):
+            created = cloudwatch.Alarm(
+                self,
+                construct_id,
+                metric=cloudwatch.Metric(
+                    namespace="AWS/SES",
+                    metric_name=metric_name,
+                    statistic="Average",
+                    period=Duration.minutes(15),
+                ),
+                threshold=threshold,
+                evaluation_periods=1,
+                alarm_description=description,
+                treat_missing_data=cloudwatch.TreatMissingData.NOT_BREACHING,
+            )
+            created.add_alarm_action(cw_actions.SnsAction(self.alarm_topic))
+            return created
+
+        # AWS places an account under review above 5% bounce / 0.1% complaint.
+        # These fire below that, so the first warning is ours and not theirs.
+        ses_alarm(
+            "SesBounceRate",
+            "Reputation.BounceRate",
+            0.03,
+            "SES bounce rate above 3%. AWS reviews accounts above 5%.",
+        )
+        ses_alarm(
+            "SesComplaintRate",
+            "Reputation.ComplaintRate",
+            0.001,
+            "SES complaint rate above 0.1%, which is AWS's review threshold.",
         )
