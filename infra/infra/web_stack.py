@@ -35,6 +35,40 @@ class WebStack(Stack):
             removal_policy=RemovalPolicy.RETAIN,
         )
 
+        # The admin UI is a different app on the API host. Without this, /admin
+        # on the web domain falls through the SPA rule below and quietly serves
+        # the learner app instead — the most confusing possible outcome, since
+        # it looks like the admin simply isn't there.
+        admin_redirect = None
+        if domain_name:
+            api_host = f"api.{domain_name}"
+            admin_redirect = cloudfront.Function(
+                self,
+                "AdminRedirect",
+                comment=f"Redirect /admin* to https://{api_host}",
+                code=cloudfront.FunctionCode.from_inline(
+                    """
+function handler(event) {
+  var uri = event.request.uri;
+  var qs = event.request.querystring || {};
+  var query = Object.keys(qs)
+    .map(function (k) {
+      return qs[k].value ? k + '=' + qs[k].value : k;
+    })
+    .join('&');
+  return {
+    statusCode: 302,
+    statusDescription: 'Found',
+    headers: {
+      location: { value: 'https://__API_HOST__' + uri + (query ? '?' + query : '') },
+    },
+  };
+}
+""".replace("__API_HOST__", api_host)
+                ),
+                runtime=cloudfront.FunctionRuntime.JS_2_0,
+            )
+
         self.distribution = cloudfront.Distribution(
             self,
             "Distribution",
@@ -42,6 +76,20 @@ class WebStack(Stack):
                 origin=origins.S3BucketOrigin.with_origin_access_control(self.bucket),
                 viewer_protocol_policy=cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
             ),
+            additional_behaviors={
+                "/admin*": cloudfront.BehaviorOptions(
+                    origin=origins.S3BucketOrigin.with_origin_access_control(self.bucket),
+                    viewer_protocol_policy=cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+                    function_associations=[
+                        cloudfront.FunctionAssociation(
+                            function=admin_redirect,
+                            event_type=cloudfront.FunctionEventType.VIEWER_REQUEST,
+                        )
+                    ],
+                ),
+            }
+            if admin_redirect
+            else {},
             default_root_object="index.html",
             # Flutter web is a SPA: route unknown paths back to index.html.
             error_responses=[
@@ -52,7 +100,9 @@ class WebStack(Stack):
                     http_status=404, response_http_status=200, response_page_path="/index.html"
                 ),
             ],
-            domain_names=[domain_name] if domain_name else None,
+            # `www` is a SAN on the same certificate, so serve it here rather
+            # than leaving people who type it on an error page.
+            domain_names=[domain_name, f"www.{domain_name}"] if domain_name else None,
             certificate=certificate,
         )
 
