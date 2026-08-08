@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/cognito_api.dart';
 
 import '../../core/auth_timeout.dart';
+import '../../core/sign_in_options.dart';
 
 import '../reader/home_page.dart';
 import 'onboarding_api.dart';
@@ -98,6 +99,7 @@ class _ConfirmSignUpPageState extends State<ConfirmSignUpPage> {
         Amplify.Auth.signIn(
           username: widget.username,
           password: widget.password,
+          options: signInOptions,
         ),
         what: 'Signing in',
       );

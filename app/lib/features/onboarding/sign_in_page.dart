@@ -2,8 +2,8 @@ import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/auth_timeout.dart';
-
 import '../../core/session_reset.dart';
+import '../../core/sign_in_options.dart';
 import '../reader/home_page.dart';
 import 'age_gate_page.dart';
 import 'forgot_password_page.dart';
@@ -46,6 +46,7 @@ class _SignInPageState extends State<SignInPage> {
         Amplify.Auth.signIn(
           username: _username.text.trim().toLowerCase(),
           password: _password.text,
+          options: signInOptions,
         ),
         what: 'Signing in',
       );
