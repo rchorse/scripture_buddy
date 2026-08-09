@@ -1,6 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Only the debug and profile manifests had this, so a release build
+         installed and launched but could not reach the API at all. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
-        android:label="scripturebuddy"
+        android:label="ScriptureBuddy"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
