@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'flag_sheet.dart';
+import '../../core/hive_strings.dart';
 import 'lesson_models.dart';
 import 'lessons_api.dart';
 
@@ -245,7 +246,7 @@ class _Question extends StatelessWidget {
                             borderRadius: BorderRadius.circular(999),
                           ),
                           child: Text(
-                            '+${result!.rewards.xpAwarded} XP',
+                            HiveStrings.nectarGained(result!.rewards.xpAwarded),
                             style: theme.textTheme.labelMedium
                                 ?.copyWith(color: Colors.white),
                           ),
@@ -304,7 +305,7 @@ class _Results extends StatelessWidget {
         const SizedBox(height: 8),
         Text(
           pct >= 80
-              ? 'Well done — these verses are sticking.'
+              ? HiveStrings.lessonSuccess
               : 'Good effort. The ones you missed will come back sooner.',
           textAlign: TextAlign.center,
           style: theme.textTheme.bodyMedium,
@@ -313,13 +314,12 @@ class _Results extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            _Stat(icon: Icons.bolt, label: '+$xpEarned XP'),
+            _Stat(icon: Icons.water_drop, label: HiveStrings.nectarGained(xpEarned)),
             if (rewards != null && rewards!.streak > 0) ...[
               const SizedBox(width: 12),
               _Stat(
-                icon: Icons.local_fire_department,
-                label: '${rewards!.streak} day'
-                    '${rewards!.streak == 1 ? '' : 's'}',
+                icon: Icons.emoji_food_beverage,
+                label: HiveStrings.jarStatus(rewards!.streak),
               ),
             ],
           ],

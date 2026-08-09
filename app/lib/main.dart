@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/config.dart';
+import 'core/hive_strings.dart';
+import 'core/hive_theme.dart';
 import 'features/onboarding/auth_gate.dart';
 
 Future<void> main() async {
@@ -36,11 +38,9 @@ class ScriptureBuddyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'ScriptureBuddy',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF2E7D32)),
-        useMaterial3: true,
-      ),
+      title: HiveStrings.appName,
+      theme: HiveTheme.light,
+      darkTheme: HiveTheme.dark,
       home: const AuthGate(),
     );
   }

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../core/hive_strings.dart';
+import '../../core/hive_theme.dart';
 import 'game_models.dart';
 
 /// Streak, level and XP bar at the top of the library.
@@ -25,14 +27,16 @@ class ProgressHeader extends StatelessWidget {
                 Row(
                   children: [
                     Icon(
-                      Icons.local_fire_department,
+                      Icons.emoji_food_beverage,
                       color: p.streak.current > 0
-                          ? const Color(0xFFE65100)
+                          ? HiveTheme.royalAmber
                           : theme.disabledColor,
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      '${p.streak.current} day streak',
+                      p.streak.current > 0
+                          ? HiveStrings.jarStatus(p.streak.current)
+                          : HiveStrings.jarEmpty,
                       style: theme.textTheme.titleMedium,
                     ),
                     const Spacer(),
@@ -46,9 +50,9 @@ class ProgressHeader extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.only(top: 4),
                     child: Text(
-                      'Practise today to keep it going',
+                      HiveStrings.jarAtRisk,
                       style: theme.textTheme.bodySmall
-                          ?.copyWith(color: const Color(0xFFE65100)),
+                          ?.copyWith(color: HiveTheme.terracotta),
                     ),
                   ),
                 const SizedBox(height: 12),
@@ -57,7 +61,7 @@ class ProgressHeader extends StatelessWidget {
                     Text('Level ${p.level}', style: theme.textTheme.labelLarge),
                     const Spacer(),
                     Text(
-                      '${p.xpToNextLevel} XP to level ${p.level + 1}',
+                      HiveStrings.toNextLevel(p.xpToNextLevel, p.level + 1),
                       style: theme.textTheme.bodySmall
                           ?.copyWith(color: theme.hintColor),
                     ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'social_api.dart';
+import '../../core/hive_strings.dart';
 import 'social_models.dart';
 
 /// Weekly league cohort, with the friends leaderboard as a second tab.
@@ -143,7 +144,7 @@ class _StandingsView extends StatelessWidget {
                         : null,
                   ),
                   subtitle: row.isYou ? const Text('You') : null,
-                  trailing: Text('${row.xp} XP',
+                  trailing: Text(HiveStrings.nectar(row.xp),
                       style: theme.textTheme.titleSmall),
                 ),
               ),
