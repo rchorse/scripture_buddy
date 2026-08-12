@@ -8,7 +8,7 @@ reviewable copy and the record of what is still open.
 actually does today.
 
 **Last updated:** 8 August 2026
-**Contact:** privacy@scripturebuddy.net — **mail routing not yet configured**
+**Contact:** privacy@scripturebuddy.net (Cloudflare Email Routing → owner inbox)
 
 ---
 
@@ -130,13 +130,8 @@ Protection Act:
 
 ## Known gaps — still open
 
-1. **`privacy@scripturebuddy.net` does not receive mail yet.** The policy is
-   live and names that address, so mail to it currently bounces. Cloudflare
-   Email Routing (free) will forward it; needs MX records on the apex.
-2. **Legal review.** In particular the email-plus consent method, and the fact
+1. **Legal review.** In particular the email-plus consent method, and the fact
    that a child's screened display name is visible to unrelated learners in a
    league cohort. Raised in `coppa-program.md` and still open.
-3. **SES production access pending.** Requested 8 August 2026; until approved,
-   consent email only reaches addresses verified in SES.
-4. **Retention sweep evidence.** The 30-day purge is implemented and was
+2. **Retention sweep evidence.** The 30-day purge is implemented and was
    verified once by hand; it is not yet covered by an automated test.

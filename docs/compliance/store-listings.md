@@ -66,8 +66,7 @@ Expected outcome: **Everyone / PEGI 3**, with an "Users Interact" notice.
 - Target age groups: include under-13 → triggers **Play Families** requirements
 - Families policy: ads-free, no misleading in-app purchase design, COPPA
   compliance attested
-- **BLOCKED:** privacy policy URL required. Draft exists at
-  `privacy-policy.md`; not hosted.
+- Privacy policy URL: https://scripturebuddy.net/privacy.html
 
 ## Apple App Store
 
@@ -110,25 +109,28 @@ Apple the owner account, which has admin access)_
 
 ## Blockers before either store
 
-1. **Privacy policy hosted at a stable public URL** — both stores require it,
-   and it must be reachable without signing in.
-2. **Monitored support contact** — required for UGC apps on both stores.
-3. **SES configured** — a reviewer testing the child flow would otherwise hit a
-   dead end waiting for a consent email.
-4. **Apple Developer Program** — $99/yr, not yet purchased. Needed even for
+1. ~~Privacy policy hosted~~ — live at https://scripturebuddy.net/privacy.html
+   and linked from the sign-in screen.
+2. ~~Monitored support contact~~ — privacy@scripturebuddy.net forwards to the
+   owner via Cloudflare Email Routing.
+3. ~~SES~~ — production access granted 8 August 2026; consent email reaches any
+   address, so a reviewer can complete the child flow.
+4. ~~In-app account deletion~~ — an adult can delete their own account from the
+   home menu, alongside the parent-initiated path for a child.
+5. **Apple Developer Program** — $99/yr, not yet purchased. Needed even for
    TestFlight.
-5. **Google Play Developer** — $25 one-time, not yet purchased.
-6. **Reviewer demo account** with a child account already set up, so the
+6. **Google Play Developer** — $25 one-time, not yet purchased.
+7. **Reviewer demo account** with a child account already set up, so the
    parental flow can be inspected without waiting on email.
-7. **Account deletion discoverable in-app** — Apple requires an in-app path to
-   delete the account, not only a contact form. A parent can delete a child's
-   account today; an adult deleting *their own* account is not yet wired up.
+8. **Upload keystore** — release APKs are still debug-signed, which Play will
+   reject.
 
 ## Friends-and-family testing (no store involved)
 
-- **Web:** already live at the CloudFront URL. Nothing to install; works on
+- **Web:** live at https://scripturebuddy.net. Nothing to install; works on
   phones. This is the fastest way to get testers going.
-- **Android:** `flutter build apk --release` with the three dart-defines, then
-  share the APK directly. Testers must allow install from unknown sources.
+- **Android:** `flutter build apk --release` with `API_URL`, `USER_POOL_ID` and
+  `USER_POOL_CLIENT_ID`, then share the APK directly. Testers must allow install
+  from unknown sources.
 - **iOS:** not possible without the Apple Developer Program. Direct testers to
   the web app on iPhone.

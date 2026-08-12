@@ -19,6 +19,11 @@ class AuthStack(Stack):
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
+        # Falls back to Cognito's own sender when no domain is configured, so
+        # a fresh deploy into an account without SES still works.
+        email_domain = self.node.try_get_context("web_domain")
+        email_sender = f"noreply@{email_domain}" if email_domain else ""
+
         self.user_pool = cognito.UserPool(
             self,
             "UserPool",
@@ -41,6 +46,22 @@ class AuthStack(Stack):
             ),
             account_recovery=cognito.AccountRecovery.EMAIL_ONLY,
             removal_policy=RemovalPolicy.RETAIN,
+            # Cognito's built-in sender caps at 50 messages a day and comes
+            # from a generic AWS address with no DKIM alignment to this domain,
+            # which is why verification codes landed in spam. Sending through
+            # our own verified domain fixes both, and routes Cognito's mail
+            # through the same configuration set as consent email so its
+            # bounces are visible too.
+            email=cognito.UserPoolEmail.with_ses(
+                from_email=email_sender,
+                from_name="ScriptureBuddy",
+                reply_to=f"privacy@{email_domain}",
+                ses_verified_domain=email_domain,
+                ses_region="us-west-2",
+                configuration_set_name="scripturebuddy-transactional",
+            )
+            if email_domain
+            else cognito.UserPoolEmail.with_cognito(),
         )
 
         # Group whose members can access /admin (the owner).
